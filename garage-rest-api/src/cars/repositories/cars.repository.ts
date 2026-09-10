@@ -2,8 +2,8 @@ import { Insertable, Updateable } from 'kysely';
 import { CarRow } from '../entities/car.entity.js';
 import { CarsTable } from '../../database/database.types.js';
 
-type CreateCarInput = Insertable<CarsTable>;
-type UpdateCarInput = Updateable<CarsTable>;
+export type CreateCarInput = Insertable<CarsTable>;
+export type UpdateCarInput = Updateable<CarsTable>;
 
 export const CARS_REPOSITORY = Symbol('CARS_REPOSITORY');
 

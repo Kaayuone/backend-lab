@@ -10,6 +10,7 @@ import {
 import { CarsService } from './cars.service.js';
 import { CreateCarDto } from './dto/create-car.dto.js';
 import { UpdateCarDto } from './dto/update-car.dto.js';
+import { CarIdParamsDto } from './dto/car-id-params.dto.js';
 
 @Controller('cars')
 export class CarsController {
@@ -26,17 +27,17 @@ export class CarsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.carsService.findOne(+id);
+  findOne(@Param() params: CarIdParamsDto) {
+    return this.carsService.findOne(params.id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCarDto: UpdateCarDto) {
-    return this.carsService.update(+id, updateCarDto);
+  update(@Param() params: CarIdParamsDto, @Body() updateCarDto: UpdateCarDto) {
+    return this.carsService.update(params.id, updateCarDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.carsService.remove(+id);
+  remove(@Param() params: CarIdParamsDto) {
+    return this.carsService.remove(params.id);
   }
 }
