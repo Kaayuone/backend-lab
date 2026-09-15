@@ -1,6 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DB } from '../../database/database.types.js';
-import { CarsRepository } from './cars.repository.js';
+import {
+  CarsRepository,
+  CreateCarInput,
+  UpdateCarInput,
+} from './cars.repository.js';
 import { KYSELY_DB } from '../../database/database.tokens.js';
 import type { Kysely } from 'kysely';
 import { CarRow } from '../entities/car.entity.js';
@@ -12,12 +16,7 @@ export class KyselyCarsRepository implements CarsRepository {
     private readonly db: Kysely<DB>,
   ) {}
 
-  async create(
-    input: object & { user_id: string; name: string } & {
-      created_at?: string | Date | undefined;
-      mileage?: string | number | undefined;
-    },
-  ): Promise<string> {
+  async create(input: CreateCarInput): Promise<string> {
     const result = await this.db
       .insertInto('cars')
       .values(input)
@@ -39,14 +38,7 @@ export class KyselyCarsRepository implements CarsRepository {
       .executeTakeFirst();
   }
 
-  update(
-    id: string,
-    input: {
-      user_id?: string | undefined;
-      name?: string | undefined;
-      mileage?: string | number | undefined;
-    },
-  ): Promise<CarRow | undefined> {
+  update(id: string, input: UpdateCarInput): Promise<CarRow | undefined> {
     return this.db
       .updateTable('cars')
       .set(input)

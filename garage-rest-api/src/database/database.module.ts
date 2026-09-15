@@ -1,35 +1,27 @@
 import { Module } from '@nestjs/common';
-import { DatabaseService } from './database.service.js';
+import { sql, type Kysely } from 'kysely';
+import type { DB } from './database.types.js';
 import { KYSELY_DB } from './database.tokens.js';
-import { Kysely, PostgresDialect, sql } from 'kysely';
-import { DB } from './database.types.js';
-import { Pool } from 'pg';
+import { createDatabase, requireDatabaseUrl } from './database.client.js';
+import { DatabaseLifecycle } from './database.lifecycle.js';
 
 const kyselyProvider = {
   provide: KYSELY_DB,
-
   useFactory: async (): Promise<Kysely<DB>> => {
-    const connectionString = process.env.DATABASE_URL;
+    const db = createDatabase(requireDatabaseUrl());
 
-    if (!connectionString) {
-      throw new Error('DATABASE_URL is not configured');
+    try {
+      await sql`select 1`.execute(db);
+      return db;
+    } catch (error) {
+      await db.destroy();
+      throw error;
     }
-
-    const db = new Kysely<DB>({
-      dialect: new PostgresDialect({
-        pool: new Pool({ connectionString }),
-      }),
-    });
-
-    // Проверяем реальное подключение до запуска приложения.
-    await sql`select 1`.execute(db);
-
-    return db;
   },
 };
 
 @Module({
-  providers: [DatabaseService, kyselyProvider],
-  exports: [DatabaseService, KYSELY_DB],
+  providers: [kyselyProvider, DatabaseLifecycle],
+  exports: [KYSELY_DB],
 })
 export class DatabaseModule {}
