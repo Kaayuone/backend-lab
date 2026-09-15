@@ -1,0 +1,54 @@
+import { sql, type Kysely } from 'kysely';
+
+export async function up(db: Kysely<unknown>): Promise<void> {
+  await sql`
+    CREATE TABLE IF NOT EXISTS users (
+      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      username TEXT NOT NULL UNIQUE
+    )
+  `.execute(db);
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS cars (
+      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      name TEXT NOT NULL,
+      mileage NUMERIC(12, 2) NOT NULL DEFAULT 0 CHECK(mileage >= 0)
+    )
+  `.execute(db);
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS service_records (
+      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      car_id BIGINT NOT NULL REFERENCES cars(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      mileage NUMERIC(12, 2) NOT NULL CHECK(mileage >= 0),
+      amount NUMERIC(12, 2) NOT NULL CHECK(amount >= 0),
+      description TEXT,
+      serviced_at DATE NOT NULL
+    )
+  `.execute(db);
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS stock_items (
+      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      name TEXT NOT NULL,
+      quantity INTEGER NOT NULL CHECK(quantity >= 0)
+    )
+  `.execute(db);
+
+  await sql`
+    CREATE INDEX IF NOT EXISTS cars_user_id_idx ON cars(user_id)
+  `.execute(db);
+  await sql`
+    CREATE INDEX IF NOT EXISTS service_records_car_id_idx
+    ON service_records(car_id)
+  `.execute(db);
+  await sql`
+    CREATE INDEX IF NOT EXISTS stock_items_user_id_idx ON stock_items(user_id)
+  `.execute(db);
+}
