@@ -49,6 +49,7 @@ export interface ServiceRecordsTable {
 
   mileage: NumericColumn;
   amount: NumericColumn;
+  currency: string;
   description: ColumnType<
     string | null,
     string | null | undefined,
@@ -64,7 +65,19 @@ export interface StockItemsTable {
   created_at: CreatedAtColumn;
 
   name: string;
-  quantity: number;
+}
+
+export type StockMovementType =
+  'purchase' | 'installation' | 'manual_out' | 'return' | 'disposal';
+
+export interface StockMovementsTable {
+  id: GeneratedAlways<string>;
+  stock_item_id: string;
+
+  created_at: CreatedAtColumn;
+
+  type: StockMovementType;
+  delta: number;
 }
 
 export interface DB {
@@ -72,4 +85,5 @@ export interface DB {
   cars: CarsTable;
   service_records: ServiceRecordsTable;
   stock_items: StockItemsTable;
+  stock_movements: StockMovementsTable;
 }

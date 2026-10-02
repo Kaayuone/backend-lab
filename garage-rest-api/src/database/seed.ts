@@ -9,11 +9,15 @@ const seedCars = [
 ] as const;
 
 const seedStockItems = [
-  { name: 'Моторное масло, 1 л', quantity: 4 },
-  { name: 'Масляный фильтр', quantity: 0 },
-  { name: 'Воздушный фильтр', quantity: 1 },
-  { name: 'Свеча зажигания', quantity: 4 },
+  { name: 'Моторное масло, 1 л', balance: 4 },
+  { name: 'Масляный фильтр', balance: 0 },
+  { name: 'Воздушный фильтр', balance: 1 },
+  { name: 'Свеча зажигания', balance: 4 },
 ] as const;
+
+const seedBalanceByName = new Map<string, number>(
+  seedStockItems.map((item): [string, number] => [item.name, item.balance]),
+);
 
 interface SeedResult {
   users: number;
@@ -102,10 +106,23 @@ async function seedStockItemsForUser(
     return 0;
   }
 
-  await trx
+  const insertedItems = await trx
     .insertInto('stock_items')
-    .values(missingItems.map((item) => ({ ...item, user_id: userId })))
+    .values(missingItems.map((item) => ({ name: item.name, user_id: userId })))
+    .returning(['id', 'name'])
     .execute();
+
+  const openingMovements = insertedItems.flatMap((item) => {
+    const balance = seedBalanceByName.get(item.name) ?? 0;
+
+    return balance > 0
+      ? [{ type: 'purchase' as const, stock_item_id: item.id, delta: balance }]
+      : [];
+  });
+
+  if (openingMovements.length > 0) {
+    await trx.insertInto('stock_movements').values(openingMovements).execute();
+  }
 
   return missingItems.length;
 }

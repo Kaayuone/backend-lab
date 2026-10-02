@@ -12,7 +12,8 @@ export async function truncateAll() {
     users,
     cars,
     service_records,
-    stock_items
+    stock_items,
+    stock_movements
     RESTART IDENTITY CASCADE
     `);
 }
