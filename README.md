@@ -2,6 +2,25 @@
 
 Backend features
 
+## Структура репозитория
+
+- `docs/backend-learning/` — актуальный план обучения.
+- [old/](old/README.md) — прежние проекты `garage-rest-api`, `garage-database` и их Compose.
+- [AGENTS.md](AGENTS.md) — правила работы в репозитории; коммиты создаём в `main`.
+
+## План изучения бэкенда
+
+Актуальный маршрут: [сильная база для своих SaaS и мобильных продуктов](docs/backend-learning/README.md).
+Основной стек — TypeScript, Node.js, NestJS, PostgreSQL и Kysely; темп — до 10 часов в неделю.
+
+- [Выбор стека и карьерные направления](docs/backend-learning/STACK.md).
+- [Подробные этапы и критерии освоения](docs/backend-learning/ROADMAP.md).
+- [Три практических проекта](docs/backend-learning/PROJECTS.md).
+- [Прогресс и ближайшие занятия](docs/backend-learning/PROGRESS.md).
+
+Прежние [v2](docs/BACKEND_LEARNING_PLAN_v2.md) и [v3](docs/plan/00-overview.md) устарели
+и сохранены как история. Их сроки, порядок и обязательные требования больше не задают программу.
+
 ## NestJS: генерация файлов
 
 Команды выполняются из папки NestJS-приложения:

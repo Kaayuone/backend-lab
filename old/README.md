@@ -6,6 +6,7 @@
 - [garage-database/](garage-database/) — упражнения на Fastify и PostgreSQL.
 - [docker-compose.yml](docker-compose.yml) — PostgreSQL и pgAdmin для этих приложений.
 
+Актуальная программа находится в [docs/backend-learning/](../docs/backend-learning/README.md).
 Новые проекты создаются вне `old/`. Старые можно запускать и использовать как примеры.
 
 ## Запуск архивной инфраструктуры
