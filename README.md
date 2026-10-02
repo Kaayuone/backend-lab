@@ -7,7 +7,7 @@ Backend features
 Команды выполняются из папки NestJS-приложения:
 
 ```powershell
-cd .\garage-rest-api
+cd .\old\garage-rest-api
 ```
 
 Общий синтаксис:
