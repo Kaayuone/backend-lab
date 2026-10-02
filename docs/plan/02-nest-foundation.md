@@ -40,7 +40,7 @@ services:
       POSTGRES_USER: garage
       POSTGRES_PASSWORD: garage_dev_password
       POSTGRES_DB: garage
-    ports: ['5432:5432']
+    ports: ['5433:5432']               # 5432 на хосте занят mlc-dev
     volumes:
       - pgdata:/var/lib/postgresql     # PG18: весь каталог, не .../data
     healthcheck:
