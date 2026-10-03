@@ -1,0 +1,2163 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Маршрут backend-lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;600;700&display=swap">
+<style>
+/* Layout: lab journal. An hours ruler across the top, the stage index on the left,
+   the open stage as a sheet on the right; a violet stamp marks a verified stage. */
+:root {
+  --paper: #eef1f5;
+  --sheet: #fbfcfd;
+  --sheet-2: #f3f5f9;
+  --ink: #16202c;
+  --ink-2: #465365;
+  --ink-3: #657285;
+  --rule: #d5dce5;
+  --grid: #e2e7ee;
+  --pen: #2747c7;
+  --pen-ink: #ffffff;
+  --pen-wash: #e3e9fb;
+  --fill: #8aa0e6;
+  --track: #dfe5f6;
+  --stamp: #6a3cb8;
+  --stamp-wash: #efe8fa;
+  --warn: #8f5300;
+  --warn-fill: #e39a2d;
+  --danger: #b42318;
+  --danger-wash: #fbe9e7;
+  --shadow: 0 1px 2px rgba(22, 32, 44, .06), 0 6px 24px -12px rgba(22, 32, 44, .18);
+  --font-display: "Unbounded", "Golos Text", system-ui, sans-serif;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f141a; --sheet: #161d25; --sheet-2: #1b232d;
+    --ink: #e4eaf1; --ink-2: #a9b5c3; --ink-3: #8592a2;
+    --rule: #2b3642; --grid: #222b36;
+    --pen: #93a8ff; --pen-ink: #0f141a; --pen-wash: #1d2742;
+    --fill: #4660c0; --track: #232d3d;
+    --stamp: #9982d8; --stamp-wash: #261f3a;
+    --warn: #f0b060; --warn-fill: #c4821f;
+    --danger: #f28b82; --danger-wash: #3a1d1b;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 28px -14px rgba(0, 0, 0, .6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f141a; --sheet: #161d25; --sheet-2: #1b232d;
+  --ink: #e4eaf1; --ink-2: #a9b5c3; --ink-3: #8592a2;
+  --rule: #2b3642; --grid: #222b36;
+  --pen: #93a8ff; --pen-ink: #0f141a; --pen-wash: #1d2742;
+  --fill: #4660c0; --track: #232d3d;
+  --stamp: #9982d8; --stamp-wash: #261f3a;
+  --warn: #f0b060; --warn-fill: #c4821f;
+  --danger: #f28b82; --danger-wash: #3a1d1b;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 28px -14px rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 15px/1.55 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: var(--pen); text-underline-offset: 2px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--pen); outline-offset: 2px; }
+code {
+  font-family: var(--font-mono); font-size: .86em;
+  background: var(--sheet-2); border: 1px solid var(--grid);
+  padding: 0 .3em; border-radius: 4px;
+  overflow-wrap: anywhere; -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+.mono { font-family: var(--font-mono); }
+.num { font-variant-numeric: tabular-nums; }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+.wrap {
+  max-width: 1220px; margin-inline: auto;
+  padding-inline: max(16px, 3vw); padding-block: 28px 72px;
+  display: grid; gap: 28px;
+}
+
+/* ---------- masthead ---------- */
+.masthead { display: grid; gap: 22px; }
+.topline {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+  font: 12px/1.4 var(--font-mono); color: var(--ink-3);
+}
+.topline .path { margin-right: auto; }
+.sync {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--rule); background: var(--sheet); color: var(--ink-2);
+}
+.sync::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--ink-3);
+}
+.sync[data-state="live"]::before { background: var(--pen); }
+.sync[data-state="saving"]::before { background: var(--warn-fill); }
+.sync[data-state="error"] { color: var(--danger); border-color: currentColor; }
+.sync[data-state="error"]::before { background: var(--danger); }
+.title-row { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 32px; }
+h1 {
+  font: 600 clamp(28px, 4.4vw, 46px)/1.05 var(--font-display);
+  letter-spacing: -.01em;
+}
+h1 .slash { color: var(--pen); }
+.subtitle { color: var(--ink-2); max-width: 62ch; margin-top: 10px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 36px; padding: 6px 14px; border-radius: 8px;
+  border: 1px solid var(--rule); background: var(--sheet); color: var(--ink);
+  font-weight: 500; font-size: 14px; line-height: 1.2;
+}
+.btn:hover:not(:disabled) { border-color: var(--pen); color: var(--pen); }
+.btn.primary { background: var(--pen); border-color: var(--pen); color: var(--pen-ink); }
+.btn.primary:hover:not(:disabled) { color: var(--pen-ink); filter: brightness(1.08); }
+.btn.danger { color: var(--danger); }
+.btn.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
+.btn.small { min-height: 30px; padding: 4px 10px; font-size: 13px; }
+.btn:disabled { opacity: .5; }
+.linkish {
+  border: 0; background: none; padding: 0; color: var(--pen);
+  text-decoration: underline; text-underline-offset: 2px; font-size: inherit;
+}
+
+.banner {
+  padding: 12px 16px; border-radius: 10px;
+  background: var(--pen-wash); color: var(--ink); border: 1px solid var(--rule);
+}
+.banner strong { font-weight: 600; }
+.restore { display: grid; gap: 12px; }
+
+.kpis {
+  display: grid; gap: 1px; background: var(--rule);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  border: 1px solid var(--rule); border-radius: 12px; overflow: hidden;
+}
+.kpi { background: var(--sheet); padding: 16px 18px; display: grid; gap: 4px; align-content: start; min-width: 0; }
+.kpi-label { font-size: 13px; color: var(--ink-2); }
+.kpi-value { font-size: 30px; font-weight: 600; line-height: 1.15; letter-spacing: -.01em; }
+.kpi-value small { font-size: 15px; font-weight: 500; color: var(--ink-2); letter-spacing: 0; }
+.kpi-sub { font-size: 13px; color: var(--ink-3); }
+
+/* hours ruler */
+.ruler { display: grid; gap: 8px; }
+.ruler-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 10px; border-radius: 2px; background: var(--track); display: inline-block; }
+.legend i.l-fill { background: var(--fill); }
+.legend i.l-pass { background: var(--stamp); }
+.legend i.l-over { background: var(--warn-fill); }
+.track { display: flex; gap: 2px; }
+.seg {
+  position: relative; flex: var(--w) 1 0; min-width: 18px; height: 30px;
+  border: 0; padding: 0; border-radius: 3px; overflow: hidden;
+  background: var(--track);
+}
+.seg:first-child { border-radius: 6px 3px 3px 6px; }
+.seg:last-child { border-radius: 3px 6px 6px 3px; }
+.seg .seg-fill { position: absolute; inset: 0 auto 0 0; background: var(--fill); }
+.seg[data-over="true"] .seg-fill { background: var(--warn-fill); }
+.seg[data-status="passed"] { background: var(--stamp); }
+.seg[data-status="passed"] .seg-fill { display: none; }
+.seg .seg-check {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--sheet); font-size: 13px; font-weight: 700;
+}
+.seg[aria-current="true"] { outline: 2px solid var(--pen); outline-offset: 2px; }
+.seg:hover { filter: brightness(1.06); }
+.track-labels { display: flex; gap: 2px; font: 11px/1 var(--font-mono); color: var(--ink-3); }
+.track-labels span { flex: var(--w) 1 0; min-width: 18px; text-align: center; position: relative; }
+.track-labels span[data-flag]::after {
+  content: "◆"; position: absolute; right: -6px; top: -1px; color: var(--ink-2); font-size: 10px;
+}
+.milestones { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 13px; color: var(--ink-2); }
+.milestones b { font-weight: 600; color: var(--ink); }
+.milestones .done b { color: var(--stamp); }
+
+.panel { display: grid; gap: 24px; min-width: 0; }
+
+/* ---------- tabs ---------- */
+.tabs { display: flex; gap: 4px; box-shadow: inset 0 -1px var(--rule); overflow-x: auto; overflow-y: hidden; }
+.tab {
+  border: 0; background: none; padding: 10px 14px 12px;
+  color: var(--ink-2); font-weight: 500; white-space: nowrap;
+}
+.tab[aria-selected="true"] { color: var(--ink); box-shadow: inset 0 -2px var(--pen); }
+.tab .badge { font: 12px var(--font-mono); color: var(--ink-3); margin-left: 6px; }
+
+/* ---------- start block ---------- */
+.start { display: grid; gap: 12px; }
+.start-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; }
+.start-head h2 { font-size: 17px; font-weight: 600; }
+.start-head p { font-size: 13px; color: var(--ink-2); max-width: 70ch; }
+.start-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.start-card {
+  display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-content: start;
+  padding: 12px 14px; border-radius: 10px; border: 1px solid var(--rule); background: var(--sheet);
+}
+.start-card[data-done="true"] { background: var(--sheet-2); }
+.start-card[data-done="true"] .start-text { color: var(--ink-2); }
+.start-card .hrs { font: 500 12px var(--font-mono); color: var(--pen); grid-column: 2; }
+.start-card input { grid-row: 1 / span 2; margin-top: 3px; }
+.start-text { grid-column: 2; font-size: 14px; }
+details.start-done > summary { cursor: pointer; color: var(--ink-2); font-size: 14px; }
+
+/* ---------- route layout ---------- */
+.route { display: grid; gap: 24px; grid-template-columns: minmax(250px, 300px) minmax(0, 1fr); align-items: start; }
+.rail { display: grid; gap: 4px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+.rail-item {
+  display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 2px 10px; align-items: center;
+  text-align: left; padding: 9px 10px; border-radius: 10px;
+  border: 1px solid transparent; background: none;
+}
+.rail-item:hover { background: var(--sheet); border-color: var(--rule); }
+.rail-item[aria-current="true"] { background: var(--sheet); border-color: var(--rule); box-shadow: var(--shadow); }
+.rail-num {
+  grid-row: 1 / span 2; width: 34px; height: 34px; border-radius: 8px;
+  display: grid; place-items: center; font: 600 14px var(--font-display);
+  background: var(--track); color: var(--ink);
+}
+.rail-item[data-status="in_progress"] .rail-num { background: var(--pen-wash); color: var(--pen); box-shadow: inset 0 0 0 1.5px var(--pen); }
+.rail-item[data-status="passed"] .rail-num { background: var(--stamp); color: var(--sheet); }
+.rail-title { font-weight: 500; font-size: 14px; line-height: 1.3; min-width: 0; }
+.rail-meta { font: 12px var(--font-mono); color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 0 10px; }
+.rail-meta .over { color: var(--warn); }
+.rail-status-text { color: var(--ink-2); }
+.rail-item[data-status="passed"] .rail-status-text { color: var(--stamp); }
+.rail-item[data-status="in_progress"] .rail-status-text { color: var(--pen); }
+
+.sheet {
+  background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+.stage { padding: clamp(18px, 3vw, 32px); display: grid; gap: 26px; min-width: 0; position: relative; }
+.stage-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 20px; align-items: start; }
+.stage[data-status="passed"] .stage-head { padding-right: 150px; }
+.stage-big {
+  font: 700 clamp(48px, 7vw, 76px)/.9 var(--font-display); color: var(--track);
+  -webkit-text-stroke: 1.5px var(--ink-3); paint-order: stroke;
+  min-width: 1.1ch;
+}
+.stage[data-status="in_progress"] .stage-big { color: var(--pen-wash); -webkit-text-stroke-color: var(--pen); }
+.stage[data-status="passed"] .stage-big { color: var(--stamp-wash); -webkit-text-stroke-color: var(--stamp); }
+.eyebrow { font: 12px/1.4 var(--font-mono); color: var(--ink-3); letter-spacing: .02em; }
+.stage h2 { font: 600 clamp(22px, 2.6vw, 30px)/1.15 var(--font-body); letter-spacing: -.01em; margin-top: 6px; }
+.stage .lead { margin-top: 10px; color: var(--ink-2); max-width: 68ch; }
+.stage .lead b { color: var(--ink); font-weight: 600; }
+
+.stamp {
+  position: absolute; top: 22px; right: 22px; transform: rotate(-7deg);
+  border: 3px double var(--stamp); color: var(--stamp); border-radius: 8px;
+  padding: 6px 12px 5px; text-align: center; pointer-events: none;
+  font: 700 13px/1.2 var(--font-display); letter-spacing: .12em; text-transform: uppercase;
+  opacity: .92; background: color-mix(in srgb, var(--sheet) 70%, transparent);
+}
+.stamp span { display: block; font: 500 11px var(--font-mono); letter-spacing: .04em; text-transform: none; }
+
+.stage-stats { display: flex; flex-wrap: wrap; gap: 10px 28px; font-size: 13px; color: var(--ink-2); }
+.stage-stats b { color: var(--ink); font-weight: 600; font-size: 15px; }
+.stage-stats .over b { color: var(--warn); }
+.meter { height: 6px; border-radius: 3px; background: var(--track); overflow: hidden; margin-top: 6px; width: 140px; max-width: 100%; }
+.meter i { display: block; height: 100%; background: var(--pen); border-radius: 0 3px 3px 0; }
+
+.status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.status-row > span { font-size: 13px; color: var(--ink-2); }
+.seg-control { display: inline-flex; border: 1px solid var(--rule); border-radius: 9px; padding: 3px; background: var(--sheet-2); gap: 2px; flex-wrap: wrap; }
+.seg-control button {
+  border: 0; background: none; padding: 6px 12px; border-radius: 6px; font-size: 14px; color: var(--ink-2);
+}
+.seg-control button[aria-checked="true"] { background: var(--sheet); color: var(--ink); box-shadow: 0 1px 2px rgba(0, 0, 0, .12); font-weight: 500; }
+.seg-control button[data-value="in_progress"][aria-checked="true"] { color: var(--pen); }
+.seg-control button[data-value="passed"][aria-checked="true"] { color: var(--stamp); }
+.seg-control button[aria-disabled="true"] { opacity: .55; }
+.gate-msg { font-size: 13px; color: var(--warn); flex-basis: 100%; }
+
+.group { display: grid; gap: 10px; }
+.group-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.group-head h3 { font-size: 12.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+.group-head .count { font: 12px var(--font-mono); color: var(--ink-3); }
+.group-head .hint { font-size: 13px; color: var(--ink-3); }
+.group[data-kind="exit"] {
+  padding: 16px 18px; border-radius: 12px; background: var(--sheet-2); border: 1px solid var(--rule);
+}
+.group[data-kind="exit"] .group-head h3 { color: var(--ink); }
+.group-note { font-size: 13px; color: var(--ink-3); }
+
+.checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.check-item {
+  display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 0 8px; align-items: start;
+  padding: 7px 6px; border-radius: 8px;
+}
+.check-item.numbered { grid-template-columns: 22px 2ch minmax(0, 1fr) auto; }
+.check-item:hover { background: var(--sheet-2); }
+.group[data-kind="exit"] .check-item:hover { background: var(--sheet); }
+.check-item input[type="checkbox"] { width: 18px; height: 18px; margin: 3px 0 0; accent-color: var(--pen); }
+.check-item .idx { font: 12px/1.9 var(--font-mono); color: var(--ink-3); min-width: 1.4ch; text-align: right; }
+.check-item label { cursor: pointer; }
+.check-item[data-done="true"] label { color: var(--ink-2); }
+.check-item[data-done="true"] .idx { color: var(--pen); }
+.note-btn {
+  border: 1px solid transparent; background: none; color: var(--ink-3); border-radius: 6px;
+  padding: 1px 7px; font-size: 12px; line-height: 1.6; white-space: nowrap;
+}
+.note-btn:hover:not(:disabled) { border-color: var(--rule); color: var(--pen); }
+.note-btn[data-has="true"] { color: var(--pen); }
+.item-note, .note-editor, .item-meta { grid-column: 2 / -1; }
+.numbered > .item-note, .numbered > .note-editor, .numbered > .item-meta { grid-column: 3 / -1; }
+.item-note, .note-editor { margin-top: 4px; }
+.item-note { font: 12.5px/1.5 var(--font-mono); color: var(--ink-2); overflow-wrap: anywhere; white-space: pre-wrap; }
+.item-note::before { content: "↳ "; color: var(--ink-3); }
+.item-meta { font: 11.5px var(--font-mono); color: var(--ink-3); margin-top: 2px; }
+.note-editor { display: grid; gap: 6px; }
+.note-editor .row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.reading { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; }
+.reading span { color: var(--ink-2); }
+.notes-list { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 14px; display: grid; gap: 4px; }
+
+.verify { display: grid; gap: 14px; padding-top: 22px; border-top: 1px solid var(--rule); }
+.verify h3 { font-size: 17px; font-weight: 600; }
+.verify .rule-text { font-size: 13px; color: var(--ink-2); max-width: 70ch; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field label, .field .label { font-size: 13px; font-weight: 500; color: var(--ink-2); }
+.field .help { font-size: 12px; color: var(--ink-3); }
+input[type="text"], input[type="number"], input[type="date"], select, textarea {
+  width: 100%; min-width: 0; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink);
+  border-radius: 8px; padding: 8px 10px; font-size: 14px; line-height: 1.45;
+}
+textarea { resize: vertical; min-height: 64px; }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--pen); outline-offset: 0; border-color: transparent; }
+.field-pair { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+/* ---------- projects ---------- */
+.projects { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: start; }
+.project { padding: 22px; display: grid; gap: 16px; min-width: 0; }
+.project h2 { font: 600 22px/1.1 var(--font-display); letter-spacing: -.01em; }
+.project .where { font: 12px var(--font-mono); color: var(--ink-3); }
+.project dl { margin: 0; display: grid; gap: 8px; font-size: 14px; }
+.project dt { font-size: 12px; color: var(--ink-3); }
+.project dd { margin: 0; }
+.readiness { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.readiness li { display: grid; grid-template-columns: 18px 1fr; gap: 8px; }
+.readiness li::before { content: "○"; color: var(--ink-3); text-align: center; }
+.readiness li[data-done="true"]::before { content: "✓"; color: var(--stamp); font-weight: 700; }
+.readiness li[data-done="true"] { color: var(--ink-2); }
+.not-mvp { font-size: 13px; color: var(--ink-3); }
+.not-mvp b { color: var(--ink-2); font-weight: 600; }
+
+/* ---------- journal ---------- */
+.journal { display: grid; gap: 22px; }
+.chart-card { padding: 20px 22px; display: grid; gap: 12px; min-width: 0; }
+.chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 8px 20px; }
+.chart-head h2 { font-size: 17px; font-weight: 600; }
+.chart-head p { font-size: 13px; color: var(--ink-2); }
+.target-field { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+.target-field input { width: 76px; }
+.chart { position: relative; min-height: 210px; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart .bar { fill: var(--fill); pointer-events: none; }
+.chart text { pointer-events: none; }
+.chart .bar.current { fill: var(--pen); }
+.chart .bar-hit { fill: transparent; cursor: default; }
+.chart .bar-hit:focus { outline: none; }
+.chart .bar-hit:focus-visible + .bar, .chart g.col:hover .bar { filter: brightness(1.12); }
+.chart .gridline { stroke: var(--grid); stroke-width: 1; }
+.chart .baseline { stroke: var(--rule); stroke-width: 1; }
+.chart .target { stroke: var(--ink-2); stroke-width: 1; }
+.chart text { fill: var(--ink-3); font: 11px var(--font-mono); }
+.chart text.target-label { fill: var(--ink-2); }
+.chart text.value { fill: var(--ink); font-weight: 500; }
+.tooltip {
+  position: absolute; pointer-events: none; z-index: 2; transform: translate(-50%, -100%);
+  background: var(--ink); color: var(--paper); border-radius: 8px; padding: 8px 10px;
+  font-size: 12px; line-height: 1.4; white-space: nowrap; box-shadow: var(--shadow);
+}
+.tooltip b { font-size: 15px; display: block; }
+details.table-view summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
+.table-scroll { overflow-x: auto; margin-top: 8px; }
+table { border-collapse: collapse; font-size: 13px; min-width: 100%; }
+th, td { text-align: left; padding: 6px 12px 6px 0; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th { font-weight: 500; color: var(--ink-2); }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+
+.review { padding: 16px 18px; border-radius: 12px; border: 1px solid var(--warn-fill); background: var(--sheet); display: grid; gap: 10px; }
+.review h3 { font-size: 15px; font-weight: 600; }
+.review p { font-size: 13px; color: var(--ink-2); }
+
+.journal-grid { display: grid; gap: 22px; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); align-items: start; }
+.entry-form { padding: 20px; display: grid; gap: 14px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+.entry-form h2 { font-size: 17px; font-weight: 600; }
+.cycle { font: 12px/1.6 var(--font-mono); color: var(--ink-3); }
+.form-row { display: grid; gap: 10px; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+.form-row.three { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) minmax(0, .8fr); }
+details.template > summary { cursor: pointer; font-size: 13px; font-weight: 500; color: var(--ink-2); }
+details.template[open] > summary { margin-bottom: 12px; }
+.template-fields { display: grid; gap: 12px; }
+.template-fields textarea { min-height: 52px; }
+.form-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.form-error { font-size: 13px; color: var(--danger); }
+
+.entries { display: grid; gap: 22px; min-width: 0; }
+.week { display: grid; gap: 10px; }
+.week-head { display: flex; justify-content: space-between; gap: 12px; font: 12px var(--font-mono); color: var(--ink-3); border-bottom: 1px solid var(--rule); padding-bottom: 6px; }
+.week-head b { color: var(--ink); font-weight: 500; }
+.entry { padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.entry-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 13px; color: var(--ink-2); }
+.entry-head time { font-family: var(--font-mono); font-size: 12px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px;
+  font-size: 12px; background: var(--pen-wash); color: var(--pen); font-weight: 500;
+}
+.chip.muted { background: var(--sheet-2); color: var(--ink-2); }
+.entry-hours { margin-left: auto; font: 500 13px var(--font-mono); color: var(--ink); }
+.entry-topic { font-weight: 500; overflow-wrap: anywhere; }
+.entry dl { margin: 6px 0 0; display: grid; gap: 8px; }
+.entry dt { font-size: 12px; color: var(--ink-3); }
+.entry dd { margin: 0; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.entry details > summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
+.entry-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
+.empty { padding: 22px; border: 1px dashed var(--rule); border-radius: 12px; color: var(--ink-2); font-size: 14px; display: grid; gap: 6px; }
+.empty b { color: var(--ink); }
+
+.footer { font-size: 13px; color: var(--ink-3); display: grid; gap: 6px; border-top: 1px solid var(--rule); padding-top: 18px; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); z-index: 10;
+  background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 10px;
+  font-size: 14px; box-shadow: var(--shadow); max-width: calc(100vw - 32px);
+}
+.copy-panel { display: grid; gap: 8px; }
+.copy-panel textarea { font: 12px/1.5 var(--font-mono); min-height: 220px; white-space: pre; }
+
+@media (max-width: 980px) {
+  .journal-grid { grid-template-columns: minmax(0, 1fr); }
+  .entry-form { position: static; }
+}
+@media (max-width: 860px) {
+  .route { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: static; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+  .rail-item { grid-template-columns: 1fr; justify-items: center; padding: 6px 2px; gap: 4px; }
+  .rail-num { grid-row: auto; width: 100%; max-width: 48px; height: 40px; }
+  .rail-title, .rail-meta { display: none; }
+}
+@media (max-width: 520px) {
+  body { font-size: 14.5px; }
+  .stamp { position: static; justify-self: start; transform: rotate(-4deg); }
+  .check-item { grid-template-columns: 22px minmax(0, 1fr); }
+  .check-item.numbered { grid-template-columns: 22px 2ch minmax(0, 1fr); }
+  .note-btn { grid-column: 2 / -1; justify-self: start; margin-top: 2px; order: 5; }
+  .numbered > .note-btn { grid-column: 3 / -1; }
+  .stage[data-status="passed"] .stage-head { padding-right: 0; }
+  .form-row, .form-row.three { grid-template-columns: minmax(0, 1fr); }
+  .kpi-value { font-size: 26px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .seg .seg-fill, .meter i { transition: width .35s ease; }
+  .rail-item, .btn, .tab { transition: background-color .15s, border-color .15s, color .15s; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="topline">
+      <span class="path">backend-lab / docs / backend-learning · план от 2 октября 2026</span>
+      <span class="sync" id="sync" data-state="live" role="status" aria-live="polite">Сохранено в браузере</span>
+      <button class="btn small" id="export-btn" type="button">Таблица для PROGRESS.md</button>
+      <button class="btn small" id="backup-btn" type="button">Скачать копию</button>
+      <button class="btn small" id="restore-btn" type="button">Восстановить из копии</button>
+      <input type="file" id="restore-file" accept="application/json,.json" hidden>
+    </div>
+    <div class="title-row">
+      <div>
+        <h1>Маршрут <span class="slash">backend</span>-lab</h1>
+        <p class="subtitle">Этапы 0–10 плана «Бэкенд для собственных продуктов». Пункт отмечается вместе с доказательством, этап считается пройденным только после критериев выхода.</p>
+      </div>
+    </div>
+    <div class="banner" id="banner" hidden></div>
+    <section class="kpis" id="kpis" aria-label="Сводка"></section>
+    <section class="ruler" aria-label="Часы по этапам">
+      <div class="ruler-head">
+        <span>Ширина отрезка — оценка этапа в часах, заливка — часы из журнала</span>
+        <div class="legend" aria-hidden="true">
+          <span><i></i>не начато</span>
+          <span><i class="l-fill"></i>часы в работе</span>
+          <span><i class="l-over"></i>сверх оценки</span>
+          <span><i class="l-pass"></i>этап пройден</span>
+        </div>
+      </div>
+      <div class="track" id="track"></div>
+      <div class="track-labels" id="track-labels" aria-hidden="true"></div>
+      <div class="milestones" id="milestones"></div>
+    </section>
+    <div class="copy-panel" id="copy-panel" hidden></div>
+    <div class="banner restore" id="restore-panel" role="region" aria-label="Восстановление из копии" hidden></div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Разделы">
+    <button class="tab" type="button" role="tab" id="tab-route" aria-controls="panel-route" data-tab="route">Этапы</button>
+    <button class="tab" type="button" role="tab" id="tab-projects" aria-controls="panel-projects" data-tab="projects">Проекты<span class="badge" id="badge-projects"></span></button>
+    <button class="tab" type="button" role="tab" id="tab-journal" aria-controls="panel-journal" data-tab="journal">Журнал<span class="badge" id="badge-journal"></span></button>
+  </nav>
+
+  <section class="panel" id="panel-route" role="tabpanel" aria-labelledby="tab-route">
+    <div id="start"></div>
+    <div class="route">
+      <nav class="rail" id="rail" aria-label="Список этапов"></nav>
+      <div id="stage"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-projects" role="tabpanel" aria-labelledby="tab-projects" hidden>
+    <div class="projects" id="projects"></div>
+  </section>
+
+  <section class="panel" id="panel-journal" role="tabpanel" aria-labelledby="tab-journal" hidden>
+    <div class="journal">
+      <section class="chart-card sheet" aria-labelledby="chart-title">
+        <div class="chart-head">
+          <div>
+            <h2 id="chart-title">Часы по неделям</h2>
+            <p id="chart-sub">Последние 12 недель, понедельник — воскресенье</p>
+          </div>
+          <label class="target-field" for="weekly-target">Ориентир в неделю, ч
+            <input type="number" id="weekly-target" min="1" max="40" step="1" value="10">
+          </label>
+        </div>
+        <div class="chart" id="chart"></div>
+        <details class="table-view">
+          <summary>Таблица по неделям</summary>
+          <div class="table-scroll" id="chart-table"></div>
+        </details>
+      </section>
+      <div id="review"></div>
+      <div class="journal-grid">
+        <form class="entry-form sheet" id="entry-form" novalidate>
+          <div>
+            <h2 id="form-title">Новая запись</h2>
+            <p class="cycle">проблема → предсказание → реализация → отказ → объяснение → тест</p>
+          </div>
+          <div class="form-row">
+            <div class="field"><label for="f-date">Дата</label><input type="date" id="f-date" required></div>
+            <div class="field"><label for="f-hours">Потрачено, ч</label><input type="text" id="f-hours" inputmode="decimal" autocomplete="off" placeholder="1,5" required></div>
+          </div>
+          <div class="field"><label for="f-stage">Этап</label><select id="f-stage"></select></div>
+          <div class="field"><label for="f-topic">Тема</label><input type="text" id="f-topic" maxlength="200" placeholder="Например: JOIN и агрегации по расходам" required></div>
+          <details class="template" id="f-template" open>
+            <summary>Запись по шаблону из PROGRESS.md</summary>
+            <div class="template-fields">
+              <div class="field"><label for="f-task">Задача и ожидаемое поведение</label><textarea id="f-task" rows="2"></textarea></div>
+              <div class="field"><label for="f-self">Что сделал самостоятельно</label><textarea id="f-self" rows="2"></textarea></div>
+              <div class="field"><label for="f-help">Где помогли документация / AI</label><textarea id="f-help" rows="2"></textarea></div>
+              <div class="field"><label for="f-failure">Какой отказ воспроизвёл</label><textarea id="f-failure" rows="2"></textarea></div>
+              <div class="field"><label for="f-result">Результат и доказательство</label><textarea id="f-result" rows="2" placeholder="Ссылка на коммит или тест, вывод эксперимента"></textarea></div>
+              <div class="field"><label for="f-unclear">Что ещё не понял</label><textarea id="f-unclear" rows="2"></textarea></div>
+              <div class="field"><label for="f-next">Следующее небольшое действие</label><textarea id="f-next" rows="2"></textarea></div>
+            </div>
+          </details>
+          <p class="form-error" id="form-error" hidden></p>
+          <div class="form-actions">
+            <button class="btn primary" type="submit" id="f-submit">Сохранить запись</button>
+            <button class="btn" type="button" id="f-cancel" hidden>Отменить правку</button>
+            <button class="btn" type="button" id="f-clear">Очистить форму</button>
+          </div>
+        </form>
+        <div class="entries" id="entries"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p id="storage-info"></p>
+    <p>Источник: <span class="mono">docs/backend-learning</span> (README, ROADMAP и stages, PROJECTS, PROGRESS), план от 2 октября 2026. Оценки часов предварительные: пересчитать после первых 20–30 часов.</p>
+    <p>После маршрута — одно расширение под реальный продукт: SSE/WebSocket, поиск средствами PostgreSQL, mobile push, полноценная подписка, OIDC-провайдер, offline-sync, Go-сервис или Python-обработка.</p>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+"use strict";
+
+// План из docs/backend-learning (README, stages, PROJECTS, PROGRESS) от 2 октября 2026.
+// id пунктов стабильны: по ним хранится прогресс, поэтому при правке текста их не менять.
+const STAGES = [
+  {
+    id: "s0", n: 0, title: "Диагностика и среда", short: "0. Диагностика и среда", hours: [6, 8],
+    lead: ["Цель", "установить фактическую исходную точку и отделить учебные данные от ценных."],
+    groups: [
+      { key: "task", title: "Сделать", numbered: true, items: [
+        ["path", "Нарисовать путь `клиент → DNS → HTTPS → сервер → пул соединений → БД → ответ`. Отметить, на каких участках возможны таймаут, отказ и утечка данных."],
+        ["sql-noai", "Без AI написать SELECT с JOIN и агрегацией; объяснить FK, UNIQUE и транзакцию. Документацией пользоваться можно. Пробелы записать в PROGRESS.md."],
+        ["db-env", "Подготовить изолированные учебную и тестовую БД, понять connection string, порт, Docker network и volume. Проверить подключение из приложения и pgAdmin/psql."],
+        ["nest-examples", "Взять понятные части текущего Nest-кода как примеры. Не тратить этап на уборку всего репозитория и завершение прежних задач."],
+        ["runtime", "Зафиксировать версии runtime, команды запуска и принцип обращения с `.env`. Настроить форматирование, lint и проверку типов минимального учебного проекта."],
+      ] },
+      { key: "exp", title: "Эксперименты", items: [
+        ["db-stop", "Остановить учебную БД и сравнить ошибку подключения с ошибкой неверного пароля."],
+        ["volume", "Перезапустить контейнер и проверить сохранность данных в volume."],
+      ] },
+      { key: "exit", title: "Критерии выхода", note: "Диагностика не выставляет грейд.", items: [
+        ["where-data", "Объясняешь, где живут данные."],
+        ["db-user", "Объясняешь, каким пользователем приложение входит в БД."],
+        ["test-isolation", "Объясняешь, почему тесты не должны подключаться к dev/prod."],
+      ] },
+    ],
+  },
+  {
+    id: "s1", n: 1, title: "SQL и модель данных", short: "1. SQL", hours: [30, 40], project: "Spendboard",
+    lead: ["Результат", "база проекта Spendboard без HTTP и без ORM."],
+    groups: [
+      { key: "theory", title: "Разобрать последовательно", items: [
+        ["keys", "Таблица, строка, ключ; связи 1:N/N:M; нормализация на прикладных примерах."],
+        ["constraints", "`NULL`, трёхзначная логика, `DEFAULT`, `NOT NULL`, `CHECK`, `UNIQUE`, FK, поведение удаления. Где правило должно защищаться самой БД."],
+        ["dml", "INSERT/UPDATE/DELETE с RETURNING; JOIN, GROUP BY, HAVING, EXISTS, подзапросы и CTE. Один полезный пример оконной функции."],
+        ["money", "Деньги: точная десятичная арифметика или minor units, код валюты, явное округление; безопасное представление BIGINT/NUMERIC на границе JS."],
+        ["time", "`date` и `timestamptz`: календарная дата отличается от момента времени; отображение и группировка в выбранном часовом поясе."],
+        ["tx", "BEGIN/COMMIT/ROLLBACK; атомарность нескольких изменений."],
+        ["indexes", "Индексы, порядок колонок составного индекса, селективность, цена индекса для записи. Первое чтение EXPLAIN."],
+        ["migrations", "Миграции и отдельные dev seed / тестовые фикстуры."],
+      ] },
+      { key: "task", title: "Практика", hint: "на `projects`, `expenses`, `recurring_costs`", numbered: true, items: [
+        ["schema", "Спроектировать таблицы и объяснить каждый FK/UNIQUE/CHECK."],
+        ["queries", "Написать 10–12 содержательных запросов: расходы за период, итоги по проектам и валютам, проекты без расходов, топ категорий, ближайшие даты продления, накопительный итог. Не суммировать разные валюты без явно заданного курса."],
+        ["edge", "Проверить пограничные данные: пустая выборка, одинаковые даты, NULL, удаляемый проект, отрицательная и большая сумма, разные валюты, конец месяца."],
+        ["migrate", "Создать схему миграцией на пустой БД; отдельной миграцией добавить новое поле и индекс. Обновить БД, в которой уже есть тестовые записи."],
+        ["tests", "Сохранить запросы и ожидаемые результаты. Ключевые ограничения и агрегации закрепить интеграционными тестами; однотипные SELECT не превращать в десятки тестов."],
+      ] },
+      { key: "exp", title: "Эксперименты", items: [
+        ["fk-vs-select", "FK против предварительного SELECT в приложении."],
+        ["tx-second-fail", "Ошибка на второй записи в транзакции."],
+        ["plan-index", "План запроса на достаточно большом наборе данных до и после индекса."],
+      ] },
+      { key: "exit", title: "Критерии выхода", items: [
+        ["join", "Самостоятельно пишешь JOIN и агрегацию."],
+        ["distinct", "Не устраняешь случайное размножение строк через DISTINCT без понимания причины."],
+        ["types", "Объясняешь выбор типов и ограничения модели."],
+      ] },
+    ],
+    notes: ["SQL остаётся регулярной практикой в последующих проектах."],
+    reading: [["Учебник PostgreSQL", "https://www.postgresql.org/docs/current/tutorial.html"]],
+  },
+  {
+    id: "s2", n: 2, title: "HTTP, сеть и Node.js", short: "2. HTTP и Node.js", hours: [18, 24],
+    lead: ["Цель", "понимать, что фреймворк делает поверх сети и runtime."],
+    groups: [
+      { key: "theory", title: "Разобрать", items: [
+        ["http", "HTTP methods, status codes, headers, cookies, body; безопасные и идемпотентные операции."],
+        ["net", "Сетевая ошибка против HTTP-ошибки; DNS, TCP, TLS и reverse proxy на уровне пути запроса."],
+        ["timeouts", "Keep-alive, ограничение размера запроса, connect/response/overall timeout."],
+        ["rest", "REST-ресурсы, пагинация и стабильная сортировка; контракт ошибок; совместимость API."],
+        ["cors", "CORS как ограничение браузера, а не механизм авторизации."],
+        ["event-loop", "Node event loop, microtasks, libuv worker pool, I/O и CPU; Promise не создаёт поток CPU."],
+        ["streams", "Потоки и backpressure; ограниченный параллелизм, AbortSignal и завершение процесса."],
+        ["esm", "ESM, сборка TS, env и зависимости в объёме, нужном для запуска сервера."],
+      ] },
+      { key: "task", title: "Лабораторные", hint: "короткие, без второго полноценного фреймворка", numbered: true, items: [
+        ["node-http", "Минимальный HTTP-сервер с двумя маршрутами через Node `http`; уложиться в 2–3 часа."],
+        ["curl", "Отправить корректный и некорректный запрос через `curl.exe` или HTTP-клиент, увидеть сырые ответы."],
+        ["cpu-io", "Сравнить CPU-цикл и ожидающий I/O запрос: во время каждого вызвать простой health endpoint."],
+        ["stream-file", "Передать большой локальный файл потоком и чтением целиком; сравнить память."],
+        ["stub-api", "Вызвать управляемую заглушку внешнего API: быстрый ответ, медленный, 429 и 500. Добавить общий дедлайн и ограничение параллельных обращений."],
+      ] },
+      { key: "exit", title: "Критерии выхода", items: [
+        ["async-cpu", "Объясняешь, почему `async` не спасает от блокировки CPU."],
+        ["limit-op", "Умеешь ограничить время и объём операции."],
+        ["diagnose", "По сообщению и логам различаешь ошибку приложения, БД и сети."],
+      ] },
+    ],
+    reading: [["Node.js: не блокировать event loop", "https://nodejs.org/en/learn/asynchronous-work/dont-block-the-event-loop"]],
+  },
+  {
+    id: "s3", n: 3, title: "NestJS, API и тесты", short: "3. API и тесты", hours: [28, 36], project: "Spendboard",
+    lead: ["Результат", "Spendboard локально выполняет полезные сценарии и имеет минимальный UI."],
+    groups: [
+      { key: "theory", title: "Разобрать", items: [
+        ["di", "Controllers, providers, modules и DI."],
+        ["pipeline", "Guards, pipes, filters, interceptors и жизненный цикл запроса; каждый механизм внедрять для понятной задачи: валидация входа, обработка ошибки, измерение запроса."],
+      ] },
+      { key: "task", title: "Сделать", numbered: true, items: [
+        ["contract", "Описать 5–7 сценариев и API-контракт: создание расхода, исправление, список, фильтр, итоги, ближайшие продления. Добавить OpenAPI и пример ошибки."],
+        ["layers", "Разделить HTTP DTO, бизнес-операцию и доступ к БД. Осознанно решить, где нужен repository, а где лишний интерфейс только усложнит код."],
+        ["kysely", "Подключить Kysely и сравнить несколько запросов с SQL этапа 1. Типизация не заменяет runtime-валидацию body/query/env и не проверяет актуальность схемы БД."],
+        ["errors", "Единый формат ошибок с кодом, сообщением и request ID. Ошибки БД и stack trace не выдавать клиенту; подробности — в защищённых логах."],
+        ["pagination", "Лимиты пагинации, whitelist сортировки, явные правила PATCH и обработки NULL."],
+        ["config", "Валидация конфигурации при старте, структурированные логи с redaction, health/readiness, корректное закрытие пула при завершении."],
+        ["ui", "Простой UI через AI; API остаётся полностью проверяемым без него."],
+        ["compose", "Собрать контейнер и поднять API + PostgreSQL через Compose локально."],
+      ] },
+      { key: "tests", title: "Тестовый минимум", items: [
+        ["unit", "Unit-тест для нетривиального расчёта или преобразования."],
+        ["integration", "Integration-тест запросов и ограничений на настоящем PostgreSQL."],
+        ["api", "API-тест успешного сценария, плохого ввода, отсутствующего объекта и пагинации."],
+        ["test-db", "Отдельный `TEST_DATABASE_URL`, проверка разрешённой тестовой БД, миграции и fixtures. Setup/teardown завершаются с `await`; без реальных личных данных."],
+      ] },
+      { key: "exp", title: "Эксперименты", items: [
+        ["recreate", "Пересоздать только одноразовую тестовую БД и запустить suite с нуля."],
+        ["error-contract", "Изменить контракт ошибки и увидеть, какой тест защищает клиента."],
+      ] },
+      { key: "exit", title: "Критерии выхода", note: "Покрытие в процентах не является критерием завершения.", items: [
+        ["readme", "Приложение запускается по README."],
+        ["persist", "Данные переживают перезапуск."],
+        ["auto", "Важные сценарии проверены автоматически."],
+      ] },
+    ],
+    notes: ["Не создавать общий base service для всего CRUD."],
+    reading: [["NestJS", "https://docs.nestjs.com/"], ["Kysely", "https://kysely.dev/docs/intro"]],
+  },
+  {
+    id: "s4", n: 4, title: "Учётные записи и безопасность", short: "4. Auth и безопасность", hours: [24, 32], project: "Spendboard",
+    lead: ["Результат", "приватное приложение с корректными границами доступа."],
+    groups: [
+      { key: "theory", title: "Изучить", items: [
+        ["authn-authz", "Authentication и authorization; идентичность пользователя, владение объектом, роль и разрешение. Пользователь определяется по проверенной сессии, а не по `userId` из body."],
+      ] },
+      { key: "task", title: "Практика", numbered: true, items: [
+        ["login", "Базовая регистрация и вход с готовой библиотекой хеширования пароля и серверной сессией. У каждой сессии есть срок действия и возможность отзыва."],
+        ["cookie", "Cookie: HttpOnly, Secure, подходящий SameSite; CSRF-защита для cookie-auth, проверка Origin, доверенный reverse proxy. Уметь объяснить модель угроз."],
+        ["rate-limit", "Ограничить частоту попыток входа; не раскрывать наличие аккаунта. Секреты и сессионные токены не попадают в логи."],
+        ["sessions", "Выход из одной и всех сессий; восстановление доступа одноразовым токеном с ограниченным сроком. Письмо — в локальный email sink. Проверить повторное использование токена."],
+        ["ownership", "Привязать данные к владельцу. Проверять доступ при чтении, изменении, в агрегатах и экспорте, а не только при загрузке страницы."],
+        ["negative", "Негативные API-тесты с двумя пользователями: подмена ID, нет сессии, истёкшая/отозванная сессия, чужой владелец в PATCH."],
+        ["oidc", "Нарисовать мобильный вход через OIDC Authorization Code + PKCE: системный браузер, callback, серверная проверка, хранение токенов в защищённом хранилище платформы. Сравнить с веб-сессией."],
+        ["https-deploy", "После проверок — первый приватный HTTPS-деплой на тестовую среду. Можно пройти краткую часть этапа 8 заранее, засчитав время один раз."],
+      ] },
+      { key: "exit", title: "Критерии выхода", items: [
+        ["foreign-id", "Чужая запись недоступна даже при известном ID."],
+        ["revoke", "Выход и отзыв реально прекращают доступ."],
+        ["auth-cost", "Понятна разница между учебной реализацией auth и стоимостью её поддержки в продукте."],
+      ] },
+    ],
+    notes: ["Публичная регистрация, MFA и несколько социальных провайдеров не обязательны для первого проекта."],
+    reading: [["OWASP: управление сессиями", "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html"]],
+  },
+  {
+    id: "s5", n: 5, title: "Транзакции, гонки и идемпотентность", short: "5. Конкуренция", hours: [16, 22], project: "Spendboard",
+    lead: ["Цель", "сохранять правила при параллельных запросах и повторах клиента."],
+    groups: [
+      { key: "theory", title: "Разобрать", items: [
+        ["mvcc", "Read Committed, MVCC на прикладном уровне, lost update, блокировка строки, deadlock и порядок взятия блокировок."],
+        ["strategies", "Optimistic concurrency, условный UPDATE, UNIQUE и SELECT FOR UPDATE; когда нужен более строгий уровень изоляции."],
+      ] },
+      { key: "task", title: "Практика", numbered: true, items: [
+        ["version", "В Spendboard добавить `version` для редактируемого расхода и конфликт при устаревшем изменении. Два клиента не теряют правки друг друга молча."],
+        ["last-slot", "Отдельная лабораторная: два запроса за последнее место или единицу квоты. Сначала воспроизвести нарушение, затем защитить инвариант транзакцией или атомарным SQL."],
+        ["rollback", "В составной операции вызвать ошибку после первого изменения и доказать rollback."],
+        ["idempotency", "Повтор запроса после неизвестного результата: idempotency key с областью пользователя/операции, уникальностью, сравнением payload и повтором результата."],
+        ["dedup", "Показать разницу между дедупликацией запроса, идемпотентной операцией и повторной отправкой ответа. TTL записи — по договорённости, а не случайной константой."],
+      ] },
+      { key: "exp", title: "Эксперименты", note: "Не доказывать отсутствие гонки одним удачным последовательным запуском.", items: [
+        ["barrier", "Два независимых соединения к БД и управляемый барьер запуска."],
+        ["version-conflict", "Конфликт версий."],
+        ["key-payload", "Одинаковый ключ с другим payload."],
+        ["lock-timeout", "Lock timeout."],
+      ] },
+      { key: "exit", title: "Критерии выхода", items: [
+        ["unique", "Объясняешь, почему проверка SELECT перед INSERT не заменяет UNIQUE."],
+        ["no-external", "Не держишь DB-транзакцию открытой во время запроса к внешнему сервису."],
+        ["simplest", "Выбираешь самый простой способ защиты конкретного инварианта."],
+      ] },
+    ],
+    reading: [["PostgreSQL: уровни изоляции", "https://www.postgresql.org/docs/current/transaction-iso.html"]],
+  },
+  {
+    id: "s6", n: 6, title: "Telegram-бот, очередь и worker", short: "6. Audio Bot", hours: [32, 44], project: "Audio Bot",
+    lead: ["Результат", "Audio Bot из задания проекта, работающий для личного использования."],
+    groups: [
+      { key: "theory", title: "Новые темы", items: [
+        ["telegram", "Polling и webhook, повторная доставка update, быстрый приём задачи."],
+        ["queue", "Redis/BullMQ, backoff/jitter, конечное число попыток, worker concurrency."],
+        ["process", "Завершение subprocess, временные файлы и состояние длительной операции."],
+      ] },
+      { key: "task", title: "Порядок реализации", numbered: true, items: [
+        ["grammy", "Через grammY принять ссылку только от разрешённых Telegram ID и показать статус задачи. Начать с polling; для webhook изучить HTTPS и secret token, не поддерживать оба способа сразу."],
+        ["fixture-adapter", "Адаптер, который возвращает маленький локальный аудиофайл: проверка приложения отдельно от нестабильного внешнего источника."],
+        ["worker", "Вынести долгую работу в BullMQ worker. Задание и его состояния — в БД; обработчик update только проверяет вход и надёжно фиксирует принятие."],
+        ["outbox", "Разрыв «записали в БД, но не положили в Redis»: outbox/dispatcher, запись задания и намерения отправки в одной транзакции, повтор с устойчивым ID, идемпотентный worker."],
+        ["spawn", "yt-dlp/FFmpeg через `spawn` с массивом аргументов и без shell. Отдельный временный каталог, фиксированные параметры и таймаут на задание."],
+        ["limits", "Ограничить вход, длительность, размер, число одновременных работ, диск, CPU/память контейнера. Завершать зависший процесс вместе с потомками."],
+        ["error-kinds", "Разделить повторяемые сетевые ошибки и постоянные отказы: удалённый ресурс, неподдерживаемая ссылка, слишком большой файл. Понятный результат пользователю."],
+        ["deliver", "Отправить аудио в Telegram, записать статус доставки, удалить временные файлы — и после ошибки. Отдельная уборка удаляет остатки после аварии процесса."],
+        ["redis-reconcile", "Проверить сохранение данных Redis и политику `noeviction`. Сверка по БД находит принятые, но потерянные очередью задания и зависшие попытки."],
+      ] },
+      { key: "exp", title: "Эксперименты", items: [
+        ["worker-restart", "Перезапуск worker посреди обработки."],
+        ["redis-down", "Недоступный Redis после commit."],
+        ["dup-update", "Два одинаковых update."],
+        ["retry-done", "Повтор задачи после завершения."],
+        ["overflow", "Переполнение лимита."],
+        ["tg-timeout", "Таймаут при отправке результата в Telegram."],
+      ] },
+      { key: "exit", title: "Критерии выхода", note: "Не обещать exactly-once для внешней отправки: таймаут Telegram может оставить неизвестным, доставлено ли сообщение.", items: [
+        ["responsive", "API и бот отвечают во время конвертации."],
+        ["no-loss", "Принятая задача не теряется в разрыве БД/очередь."],
+        ["no-recompute", "Повтор не создаёт несколько вычислений без необходимости."],
+        ["no-stuck", "После сбоя нет вечного `processing` и забытых файлов."],
+      ] },
+    ],
+    reading: [
+      ["grammY", "https://grammy.dev/guide/"],
+      ["BullMQ: идемпотентные задачи", "https://docs.bullmq.io/patterns/idempotent-jobs"],
+      ["BullMQ: соединения", "https://docs.bullmq.io/guide/connections"],
+      ["yt-dlp", "https://github.com/yt-dlp/yt-dlp"],
+    ],
+  },
+  {
+    id: "s7", n: 7, title: "Файлы и внешние интеграции", short: "7. Файлы и интеграции", hours: [16, 22], project: "Audio Bot",
+    lead: ["Цель", "перестать считать внешнюю систему надёжной частью собственного процесса."],
+    groups: [
+      { key: "task", title: "Сделать", numbered: true, items: [
+        ["s3-archive", "Временный приватный архив результатов Audio Bot в S3-совместимом хранилище: метаданные и владелец в PostgreSQL, содержимое в object storage, срок жизни объекта, короткая подписанная ссылка после авторизации."],
+        ["direct-upload", "Лабораторная прямой загрузки: согласовать размер/тип/ключ, проверить фактический объект перед публикацией, очистить неподтверждённую загрузку. Не доверять одному Content-Type клиента."],
+        ["download", "Скачивание без чтения целого файла в память: имя файла, случайный object key, Content-Disposition, ограничения размера, приватность bucket."],
+        ["email", "Email-транспорт для восстановления доступа из этапа 4. Проверки используют fake/sink, отдельный smoke проверяет настоящий транспорт."],
+        ["http-client", "Общий HTTP-клиент: время, число попыток, конкурентность, 429 и Retry-After. Повтор неидемпотентного запроса требует отдельного решения."],
+        ["ssrf", "SSRF и произвольный URL: scheme/host, редиректы, DNS, loopback/private/link-local адреса. Одной проверки строки URL недостаточно."],
+      ] },
+      { key: "exp", title: "Эксперименты", items: [
+        ["file-gone", "Файл удалён до выдачи."],
+        ["link-expired", "Подписанная ссылка истекла."],
+        ["rate-429", "Сервис отвечает 429."],
+        ["conn-cut", "Соединение оборвалось после отправки запроса."],
+        ["bad-schema", "Внешний ответ не соответствует ожидаемой схеме."],
+      ] },
+      { key: "exit", title: "Критерии выхода", note: "Провайдер хранится за небольшим адаптером, а не за универсальной абстракцией всех облаков.", items: [
+        ["transport-domain", "Разделяешь ошибку транспорта и доменный отказ."],
+        ["cost", "Ограничиваешь стоимость операции."],
+        ["no-foreign-files", "Не выдаёшь чужие файлы."],
+        ["orphans", "Есть способ убрать бесхозные объекты."],
+      ] },
+    ],
+  },
+  {
+    id: "s8", n: 8, title: "Деплой и эксплуатация", short: "8. Деплой", hours: [26, 36], project: "Audio Bot",
+    lead: ["Результат", "понятный полный цикл выпуска, без отдельной специализации DevOps."],
+    groups: [
+      { key: "task", title: "Практика на работающем проекте", numbered: true, items: [
+        ["linux", "Linux: SSH-ключи, пользователи и права, процессы, переменные окружения, диск, логи, listening ports, firewall. Выяснить, почему процесс не запускается."],
+        ["image", "Production-образ: фиксированная база и lockfile, multi-stage где полезно, non-root процесс, минимум зависимостей, секреты вне image."],
+        ["compose-prod", "Compose: API, worker, PostgreSQL, Redis и reverse proxy, внутренние сети и volumes. БД и Redis не становятся публичными сервисами."],
+        ["caddy", "Домен → DNS → Caddy → HTTPS → приложение. Forwarded headers, доверенный proxy, ограничения размера и времени запроса."],
+        ["ci", "CI: установка из lockfile, lint/typecheck, тесты с одноразовой БД, сборка image. Контролируемый выпуск конкретного image tag и smoke-проверка."],
+        ["migrations-step", "Миграции — отдельным шагом выпуска. На учебном изменении пройти expand → совместимый код → перенос данных → contract."],
+        ["rollback", "Rollback приложения при совместимой схеме. Откат image не восстанавливает удалённые данные; разрушительная миграция не обратима автоматически."],
+        ["backup", "Процедура backup/restore: отдельное хранилище, доступ, периодичность, срок хранения, RPO/RTO простыми словами. Восстановить backup в новую БД и проверить записи."],
+        ["metrics", "Логи, uptime, ошибки, latency, длина и возраст очереди, диск, соединения БД. Небольшой набор метрик и одно полезное уведомление."],
+        ["runbook", "Runbook: недоступен API; недоступна БД; worker завис; закончился диск; не проходит webhook; нужно отозвать утёкший токен."],
+      ] },
+      { key: "exp", title: "Эксперименты", items: [
+        ["host-restart", "Перезапустить хост или контейнер."],
+        ["db-cut", "Оборвать БД."],
+        ["bad-config", "Выпустить несовместимую настройку в тестовой среде."],
+        ["restore-time", "Выполнить восстановление и измерить время."],
+      ] },
+      { key: "exit", title: "Критерии выхода", note: "Backup считается проверенным только после успешного restore.", items: [
+        ["readme-other", "Другой человек может запустить проект по README."],
+        ["find-cause", "Находишь причину сбоя по наблюдениям."],
+        ["known-version", "Выкатываешь известную версию."],
+        ["restore", "Подтверждаешь восстановление данных."],
+      ] },
+    ],
+    notes: [
+      "Без VPS сначала Linux VM локально, а внешний HTTPS/webhook — через доступную тестовую среду. Публичный деплой не считается пройденным до реального выполнения.",
+      "Хостинг, стоимость и покупка домена — отдельные решения перед этим этапом.",
+    ],
+    reading: [
+      ["Docker Compose в production", "https://docs.docker.com/compose/how-tos/production/"],
+      ["Caddy: автоматический HTTPS", "https://caddyserver.com/docs/automatic-https"],
+    ],
+  },
+  {
+    id: "s9", n: 9, title: "Небольшой SaaS и платежи", short: "9. SaaS и платежи", hours: [36, 48], project: "Feedback Inbox",
+    lead: ["Результат", "Feedback Inbox с двумя изолированными workspace и тестовым платным тарифом."],
+    groups: [
+      { key: "task", title: "Сделать", numbered: true, items: [
+        ["reuse", "Перенести понятный каркас, сессии, тестовую БД, логи и deployment-шаблон. Написать только новую предметную часть."],
+        ["tenant", "Workspace, membership, роли owner/member. Tenant проверяется во всех запросах, файлах, агрегатах и фоновых задачах; роль берётся на сервере."],
+        ["plans", "Free/Pro и отдельное понятие права доступа. Не смешивать платёж, подписку и разрешение в одну колонку `isPaid`."],
+        ["checkout", "Разовая покупка 30 дней Pro через checkout-страницу провайдера. Цену, валюту, товар и пользователя определяет сервер; данные карты обрабатывает провайдер."],
+        ["payment-idem", "Платёж создаётся идемпотентно: provider ID и собственный ID сохранены до перехода клиента; при неизвестном результате — повтор по правилам провайдера, а не новый платёж."],
+        ["webhook", "Webhook по правилам конкретного провайдера: подпись, проверка источника или запрос состояния через API. Не переносить способ Stripe на любой сервис."],
+        ["events", "Надёжно зафиксировать событие, дедуплицировать по уникальному ID, атомарно обработать переход состояния и выдачу права. Возврат браузера не подтверждает оплату."],
+        ["edge-events", "Повторы, события не по порядку, неизвестный payment ID, неверные сумма/валюта, отмена, полный возврат, истечение доступа. Таймер — не единственная проверка срока."],
+        ["reconcile", "Периодическая или ручная сверка незавершённых платежей с провайдером: потерянный webhook не оставляет оплату в неизвестном состоянии."],
+        ["renewal", "Повторное и неуспешное продление через fake gateway/fixtures. Автосписания, prorations, купоны и несколько провайдеров — расширение."],
+      ] },
+      { key: "checks", title: "Обязательные проверки", items: [
+        ["dup-webhook", "Два одинаковых webhook дают одно право."],
+        ["stale-event", "Событие с меньшей актуальностью не отменяет подтверждённый более новый результат."],
+        ["refund-policy", "Refund после оплаты приводит к явно описанной политике доступа."],
+        ["quota-race", "Параллельное создание последнего разрешённого ресурса не превышает квоту."],
+        ["workspace-isolation", "Пользователь одного workspace не читает другой."],
+      ] },
+      { key: "exit", title: "Критерии выхода", items: [
+        ["sandbox", "Платежи работают в sandbox."],
+        ["journal", "Есть журнал состояний и способ сверки."],
+        ["billing-vs-entitlements", "Объясняешь отличие billing от entitlements и почему сеть не даёт exactly-once."],
+      ] },
+    ],
+    notes: [
+      "Бюджет внутри этапа: 8–10 ч на сценарий и tenant isolation, 6–8 на billing-модель, 12–18 на провайдера и webhooks, 10–12 на отказы, UI и выпуск.",
+      "Если sandbox требует недоступного оформления, сначала fake gateway; интеграция с настоящим sandbox остаётся открытым критерием.",
+      "Изучается один провайдер. Перед реальным приёмом денег отдельно проверить условия, оформление продавца, чеки и налоги.",
+    ],
+    reading: [
+      ["ЮKassa: webhooks", "https://yookassa.ru/developers/using-api/webhooks"],
+      ["Stripe: webhooks", "https://docs.stripe.com/webhooks"],
+    ],
+  },
+  {
+    id: "s10", n: 10, title: "Производительность и итоговая проверка", short: "10. Итоговая проверка", hours: [18, 26], project: "Feedback Inbox",
+    lead: ["Цель", "понять пределы своего решения и принимать решения на основании измерений."],
+    groups: [
+      { key: "task", title: "Сделать", numbered: true, items: [
+        ["baseline", "Один пользовательский запрос и одна фоновая задача: размер данных, среда, профиль нагрузки, p50/p95, ошибки, throughput, CPU/память, соединения БД."],
+        ["explain", "Найти медленный SQL через EXPLAIN ANALYZE: N+1, ненужный JOIN, полное сканирование, неправильный индекс, слишком большая выдача."],
+        ["cursor", "Сравнить offset и cursor pagination на изменяемом списке со стабильным порядком."],
+        ["cache", "Один эксперимент с кэшем: ключ, TTL, tenant, инвалидирование, устаревший ответ. Кэш остаётся только при измеренной пользе."],
+        ["pool", "Показать, что рост числа API-процессов меняет общий размер DB-пула и лимиты. Backpressure и лимит worker важнее бесконечного накопления задач."],
+        ["trace", "Прочитать метрики и логи одного сквозного запроса или задачи; понять назначение trace без большого observability-стека."],
+        ["final-run", "Итоговый сценарий: новый пользователь → ресурс → фоновая работа → тестовая оплата → повтор уведомления → перезапуск → проверка доступа → восстановление backup."],
+        ["review", "Короткий разбор: архитектура, 3 инварианта, 3 отказа, измерения, ограничения, следующий шаг при росте нагрузки. Защитить решения без подсказок AI."],
+      ] },
+      { key: "exit", title: "Критерии выхода", items: [
+        ["cause-effect", "Показываешь причину проблемы и эффект исправления."],
+        ["env-bound", "Понимаешь, что измерения относятся к конкретной среде."],
+        ["no-highload", "Не называешь приложение готовым к произвольному highload."],
+      ] },
+    ],
+  },
+];
+
+const PROJECTS = [
+  {
+    id: "p1", name: "Spendboard", where: "этапы 1, 3–5",
+    use: "Видеть расходы на свои продукты и даты продления сервисов.",
+    gain: "SQL, API, auth, тесты, конкурентное редактирование.",
+    readiness: [
+      ["s1", "Схема, seed и SQL-отчёты — конец этапа 1"],
+      ["s3", "Локальное API, тесты и UI — конец этапа 3"],
+      ["s4", "Приватная версия, которой можно пользоваться, — конец этапа 4"],
+      ["s5", "Защита от потерянного редактирования и объяснённые транзакции — конец этапа 5"],
+    ],
+    accept: [
+      ["period", "Расход отражается ровно в нужном периоде с учётом выбранной семантики даты."],
+      ["zero", "Проект без расходов присутствует в отчёте с нулём, а не исчезает из JOIN."],
+      ["money", "Деньги не теряют точность на границе БД/JS; разные валюты не складываются напрямую."],
+      ["archive", "Архив не уничтожает финансовую историю."],
+      ["isolation", "Пользователь B не читает и не меняет расход A и не видит его в агрегатах."],
+      ["lost-update", "Две правки одной версии не приводят к молчаливой потере данных."],
+      ["migrations", "Миграции работают на пустой БД и на БД предыдущей версии с данными."],
+      ["readme", "Есть инструкция запуска, несколько содержательных API/DB-тестов и примеры запросов."],
+    ],
+    notMvp: "банковские интеграции, распознавание чеков, бухгалтерия, автоконвертация валют, семейный бюджет, сложные расписания. CSV-экспорт — только после закрытия приёмки.",
+  },
+  {
+    id: "p2", name: "Audio Bot", where: "этапы 6–8",
+    use: "Получать аудио по YouTube-ссылке в личном Telegram-боте.",
+    gain: "Очереди, subprocess, файлы, лимиты, отказы интеграций.",
+    readiness: [["s6", "Работает для личного использования — конец этапа 6"]],
+    accept: [
+      ["audio", "Контролируемая YouTube-ссылка превращается в воспроизводимый аудиофайл в Telegram."],
+      ["status", "Пока идёт конвертация, `/status` отвечает быстро."],
+      ["dup", "Повтор update/job не создаёт лишнюю бизнес-операцию."],
+      ["gap", "Разрыв между записью БД и очередью воспроизводится и восстанавливается."],
+      ["processing", "Перезапуск worker не оставляет вечную задачу `processing`."],
+      ["final", "Большой, долгий или недоступный ролик даёт конечный и понятный результат."],
+      ["isolation", "Пользователь не получает историю или результат другого Telegram ID."],
+      ["unknown", "Таймаут доставки не маскируется как достоверная недоставка."],
+      ["cleanup", "Очистка работает после успеха, ошибки и аварии процесса."],
+      ["private-link", "На этапе 7 приватный файл доступен по ограниченной ссылке и исчезает по сроку хранения."],
+    ],
+    notMvp: "поиск музыки, каталог, рекомендации, плейлисты, публичное распространение, оплата, несколько платформ, свой Bot API server ради больших файлов.",
+  },
+  {
+    id: "p3", name: "Feedback Inbox", where: "этапы 9–10",
+    use: "Собирать обратную связь пользователей своих приложений.",
+    gain: "Изоляция SaaS-клиентов, тарифы, платежи и webhooks.",
+    readiness: [["s9", "Два изолированных workspace и тестовый платный тариф — конец этапа 9"]],
+    accept: [
+      ["form", "Форма из своего приложения создаёт обращение в нужном проекте."],
+      ["tenant", "Участник другого workspace не видит обращение даже с известным ID."],
+      ["public-key", "Публичный ключ не открывает административные операции."],
+      ["quota", "Два параллельных запроса не превышают квоту проектов."],
+      ["sandbox", "Оплата проходит в sandbox; браузер не может сам назначить Pro."],
+      ["events", "Повторные и переставленные события, возврат и истечение срока обработаны по правилам."],
+      ["reconcile", "Потерянный webhook восстанавливается сверкой с провайдером."],
+      ["history", "Есть история billing-решений, инструкция поддержки и воспроизводимый деплой."],
+    ],
+    notMvp: "голосование, чат, публичный roadmap, рассылки, файлы, сложные приглашения, маркетплейс интеграций, много валют, купоны, несколько платёжных систем.",
+  },
+];
+
+const START = [
+  ["diag", "2 ч", "Диагностический SQL/HTTP-разбор без AI. Записать, что удалось и где были подсказки."],
+  ["env", "4–6 ч", "Отдельная учебная и тестовая БД, подключение, проверка volume и команды запуска."],
+  ["model", "4 ч", "Модель Spendboard, выбор типов и ограничений, первая миграция."],
+  ["joins", "4 ч", "JOIN и агрегации по тестовым данным, проверка пустых и пограничных случаев."],
+  ["tx", "4–6 ч", "Транзакция с искусственным отказом, SQL-задачи, запись ошибок и корректировка оценки."],
+];
+
+const MILESTONES = [
+  { after: "s4", text: "приватная версия Spendboard" },
+  { after: "s6", text: "работающий Audio Bot" },
+  { after: "s10", text: "маршрут пройден" },
+];
+
+const STATUS_LABEL = { not_checked: "Не проверен", in_progress: "В работе", passed: "Пройден" };
+
+// ---------- справочники ----------
+const STAGE_BY_ID = new Map(STAGES.map((s) => [s.id, s]));
+const TOTAL_MIN = STAGES.reduce((a, s) => a + s.hours[0], 0);
+const TOTAL_MAX = STAGES.reduce((a, s) => a + s.hours[1], 0);
+const BUFFER = 1.2; // запас около 20%, как в README плана
+const SESSION_FIELDS = [
+  ["task", "Задача и ожидаемое поведение"],
+  ["self", "Что сделал самостоятельно"],
+  ["help", "Где помогли документация / AI"],
+  ["failure", "Какой отказ воспроизвёл"],
+  ["result", "Результат и доказательство"],
+  ["unclear", "Что ещё не понял"],
+  ["next", "Следующее небольшое действие"],
+];
+
+// ---------- утилиты ----------
+const $ = (id) => document.getElementById(id);
+const PROPS = new Set(["checked", "disabled", "value", "selected", "open"]);
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || (v === false && !PROPS.has(k))) continue;
+      if (PROPS.has(k)) el[k] = v;
+      else if (k === "class") el.className = v;
+      else if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : String(v));
+    }
+  }
+  for (const c of children.flat(Infinity)) {
+    if (c == null || c === false) continue;
+    el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return el;
+}
+const SVG_NS = "http://www.w3.org/2000/svg";
+function s(tag, attrs, ...children) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null) continue;
+    if (k.startsWith("on") && typeof v === "function") el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, String(v));
+  }
+  for (const c of children) if (c != null) el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return el;
+}
+// Текст плана: фрагменты в обратных кавычках становятся <code>.
+const rich = (text) => String(text).split("`").map((p, i) => (i % 2 ? h("code", null, p) : p));
+const URL_RE = /https?:\/\/[^\s<>"']+/g;
+function linkify(text) {
+  const out = [];
+  let last = 0;
+  for (const m of String(text).matchAll(URL_RE)) {
+    const url = m[0].replace(/[).,;:!?]+$/, "");
+    if (m.index > last) out.push(text.slice(last, m.index));
+    out.push(h("a", { href: url, target: "_blank", rel: "noopener noreferrer" }, url));
+    last = m.index + url.length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+const nf = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
+const hrs = (x) => nf.format(Math.round(x * 100) / 100);
+const range = (a, b) => `${a}–${b}`;
+const pad2 = (n) => String(n).padStart(2, "0");
+const isoDate = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const todayISO = () => isoDate(new Date());
+const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+function parseISO(str) {
+  const [y, m, d] = str.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+function addDays(d, n) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() + n);
+  return x;
+}
+function weekStart(d) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return x;
+}
+const fmtDay = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" });
+const fmtDayW = new Intl.DateTimeFormat("ru-RU", { weekday: "short", day: "numeric", month: "short" });
+const fmtFull = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+const fmtDM = (d) => `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}`;
+const showDate = (iso) => (iso && ISO_RE.test(iso) ? fmtFull.format(parseISO(iso)) : "");
+const newId = () => `e${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+// Настройки интерфейса (вкладка, этап, черновик формы): потеря не страшна.
+const prefs = {
+  get(k) { try { return JSON.parse(localStorage.getItem("backend-lab-tracker:ui:" + k)); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem("backend-lab-tracker:ui:" + k, JSON.stringify(v)); } catch { /* хранилище недоступно */ } },
+};
+
+// ---------- состояние ----------
+const raw = { items: new Map(), stages: new Map(), sessions: new Map(), meta: {} };
+const state = { items: {}, stages: {}, sessions: [], settings: {}, hoursBy: new Map(), total: 0 };
+const conn = { mode: "live", error: "", reason: "", corruptText: null };
+const ui = {
+  tab: "route", stage: null, noteOpen: null, gate: null, drafts: {},
+  editing: null, confirmDelete: null, openEntries: new Set(), restore: null,
+};
+let lastSig = "";
+
+const canEdit = () => conn.mode === "live";
+
+function cleanSession(id, d) {
+  if (!d || typeof d !== "object") return null;
+  const hours = Number(d.hours);
+  if (typeof d.date !== "string" || !ISO_RE.test(d.date) || !(hours > 0 && hours <= 24)) return null;
+  const stage = STAGE_BY_ID.has(d.stage) ? d.stage : "";
+  const out = { id, date: d.date, hours, stage, topic: String(d.topic || "").slice(0, 200), createdAt: String(d.createdAt || "") };
+  for (const [k] of SESSION_FIELDS) out[k] = String(d[k] || "").slice(0, 4000);
+  return out;
+}
+
+function derive() {
+  state.items = Object.fromEntries(raw.items);
+  state.stages = Object.fromEntries(raw.stages);
+  state.settings = raw.meta.settings || {};
+  state.sessions = [...raw.sessions].map(([id, d]) => cleanSession(id, d)).filter(Boolean)
+    .sort((a, b) => (a.date === b.date ? (a.createdAt < b.createdAt ? 1 : -1) : a.date < b.date ? 1 : -1));
+  state.hoursBy = new Map();
+  state.total = 0;
+  for (const e of state.sessions) {
+    state.total += e.hours;
+    if (e.stage) state.hoursBy.set(e.stage, (state.hoursBy.get(e.stage) || 0) + e.hours);
+  }
+  return JSON.stringify([state.items, state.stages, state.sessions, state.settings, conn.mode]);
+}
+
+const isDone = (id) => state.items[id]?.done === true;
+function stageStatus(sid) {
+  const st = state.stages[sid]?.status;
+  return STATUS_LABEL[st] ? st : "not_checked";
+}
+function stageCounts(stage) {
+  let total = 0, done = 0, exitTotal = 0, exitDone = 0;
+  for (const g of stage.groups) {
+    for (const [slug] of g.items) {
+      const ok = isDone(`${stage.id}.${slug}`);
+      total++; if (ok) done++;
+      if (g.key === "exit") { exitTotal++; if (ok) exitDone++; }
+    }
+  }
+  return { total, done, exitTotal, exitDone };
+}
+function currentStage() {
+  return STAGES.find((s) => stageStatus(s.id) === "in_progress")
+    || STAGES.find((s) => stageStatus(s.id) !== "passed")
+    || STAGES[STAGES.length - 1];
+}
+function weeklyTarget() {
+  const t = Number(state.settings.weeklyTarget);
+  return t >= 1 && t <= 40 ? t : 10;
+}
+// Темп: часы за последние до 28 дней, приведённые к неделе; нужна хотя бы неделя записей.
+function pace() {
+  if (!state.sessions.length) return null;
+  const today = parseISO(todayISO());
+  const first = parseISO(state.sessions[state.sessions.length - 1].date);
+  const span = Math.round((today - first) / 864e5) + 1;
+  if (span < 7) return null;
+  const windowDays = Math.min(28, span);
+  const from = isoDate(addDays(today, -(windowDays - 1)));
+  const sum = state.sessions.filter((e) => e.date >= from && e.date <= isoDate(today)).reduce((a, e) => a + e.hours, 0);
+  return { perWeek: (sum / windowDays) * 7, windowDays };
+}
+// Остаток считается только по непройденным этапам: пройденный этап закрывает свою оценку.
+function remaining() {
+  let min = 0, max = 0;
+  for (const st of STAGES) {
+    if (stageStatus(st.id) === "passed") continue;
+    const got = state.hoursBy.get(st.id) || 0;
+    min += Math.max(0, st.hours[0] - got);
+    max += Math.max(0, st.hours[1] - got);
+  }
+  return { min, max };
+}
+
+// ---------- хранение в браузере ----------
+// Все отметки, статусы и журнал — один JSON в localStorage. Страница открывается как файл,
+// поэтому данные живут в профиле браузера; перенос и резервная копия — через файл JSON.
+const STORAGE_KEY = "backend-lab-tracker:v1";
+const BACKUP_APP = "backend-lab-tracker";
+const COLLECTIONS = ["items", "stages", "sessions", "meta"];
+const ID_RE = /^[A-Za-z0-9_.~:@+-]{1,200}$/;
+const isObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+
+// Проверяет форму данных из localStorage или из файла копии; при ошибке бросает исключение.
+function parseDocs(src) {
+  if (!isObject(src)) throw new Error("ожидался объект JSON");
+  if (src.app !== BACKUP_APP) throw new Error("это не данные трекера backend-lab");
+  const docs = {};
+  for (const col of COLLECTIONS) {
+    const list = src[col] ?? {};
+    if (!isObject(list)) throw new Error(`раздел «${col}» должен быть объектом`);
+    for (const [id, d] of Object.entries(list)) {
+      if (!ID_RE.test(id) || !isObject(d)) throw new Error(`некорректная запись ${col}/${id}`);
+    }
+    docs[col] = list;
+  }
+  return docs;
+}
+function applyDocs(docs) {
+  for (const col of ["items", "stages", "sessions"]) {
+    raw[col].clear();
+    for (const [id, d] of Object.entries(docs[col])) raw[col].set(id, d);
+  }
+  raw.meta = { ...docs.meta };
+}
+const snapshotDocs = () => ({
+  items: Object.fromEntries(raw.items), stages: Object.fromEntries(raw.stages),
+  sessions: Object.fromEntries(raw.sessions), meta: { ...raw.meta },
+});
+const serialize = (extra) => JSON.stringify({ app: BACKUP_APP, version: 1, ...extra, ...snapshotDocs() });
+
+// Повреждённые данные не перезаписываются: сохранение выключается до восстановления из копии.
+function loadStorage() {
+  let text = null;
+  try {
+    text = localStorage.getItem(STORAGE_KEY);
+  } catch {
+    conn.mode = "readonly";
+    conn.reason = "Браузер не даёт этой странице хранить данные (localStorage заблокирован), поэтому отметки не сохранятся.";
+    return;
+  }
+  if (text == null) {
+    applyDocs({ items: {}, stages: {}, sessions: {}, meta: {} });
+    conn.mode = "live";
+    conn.reason = "";
+    conn.corruptText = null;
+    return;
+  }
+  try {
+    applyDocs(parseDocs(JSON.parse(text)));
+    conn.mode = "live";
+    conn.reason = "";
+    conn.corruptText = null;
+  } catch (e) {
+    conn.mode = "readonly";
+    conn.corruptText = text;
+    conn.reason = `Сохранённые отметки не читаются (${e.message}). Чтобы не затереть их, сохранение выключено: восстановите данные из файла копии.`;
+  }
+}
+function persist() {
+  localStorage.setItem(STORAGE_KEY, serialize({ savedAt: new Date().toISOString() }));
+}
+
+// Запись синхронная: при отказе браузера изменение откатывается и в памяти.
+function write(path, data, opts = {}) {
+  if (!canEdit()) return;
+  const [col, id] = path.split("/");
+  const isMeta = col === "meta";
+  const prev = isMeta ? raw.meta[id] : raw[col].get(id);
+  const put = (value) => {
+    if (isMeta) { if (value === undefined || value === null) delete raw.meta[id]; else raw.meta[id] = value; }
+    else if (value === undefined || value === null) raw[col].delete(id);
+    else raw[col].set(id, value);
+  };
+  put(data);
+  try {
+    persist();
+    conn.error = "";
+  } catch (e) {
+    put(prev);
+    conn.error = e?.name === "QuotaExceededError"
+      ? "Хранилище браузера заполнено, изменение не сохранено. Скачайте копию и удалите старые записи журнала."
+      : "Браузер отказал в записи, изменение не сохранено.";
+    toast(conn.error);
+  }
+  lastSig = derive();
+  if (opts.render === false && !conn.error) renderSync();
+  else renderAll();
+}
+
+function setItem(id, patch) {
+  const cur = state.items[id] || {};
+  const next = { done: cur.done === true, note: String(cur.note || ""), doneAt: cur.doneAt || null, ...patch };
+  next.doneAt = next.done ? next.doneAt || todayISO() : null;
+  next.updatedAt = new Date().toISOString();
+  write(`items/${id}`, next.done || next.note ? next : null);
+}
+function setStage(sid, patch, opts) {
+  const cur = state.stages[sid] || {};
+  const next = {
+    status: stageStatus(sid), evidence: String(cur.evidence || ""), gaps: String(cur.gaps || ""),
+    passedAt: cur.passedAt || null, ...patch,
+  };
+  next.passedAt = next.status === "passed" ? next.passedAt || todayISO() : null;
+  next.updatedAt = new Date().toISOString();
+  write(`stages/${sid}`, next, opts);
+}
+function setSettings(patch) {
+  write("meta/settings", { ...state.settings, ...patch, updatedAt: new Date().toISOString() });
+}
+
+function onData(force) {
+  const sig = derive();
+  if (force || sig !== lastSig) { lastSig = sig; renderAll(); }
+  else renderSync();
+}
+
+// ---------- отрисовка ----------
+const MONTHS = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+const monthYear = (d) => `${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+const smooth = () => (matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth");
+const nf1 = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 1 });
+const weekLabel = (w) => `${fmtDay.format(w.start)} – ${fmtDay.format(w.end)}`;
+
+function captureFocus() {
+  const el = document.activeElement;
+  if (!el || !el.id || el === document.body) return null;
+  const f = { id: el.id };
+  try {
+    if (typeof el.selectionStart === "number") { f.start = el.selectionStart; f.end = el.selectionEnd; }
+  } catch { /* у части полей нет выделения */ }
+  return f;
+}
+function restoreFocus(f) {
+  if (!f) return;
+  const el = document.getElementById(f.id);
+  if (!el || el === document.activeElement || el.disabled || el.closest("[hidden]")) return;
+  el.focus({ preventScroll: true });
+  if (f.start != null) { try { el.setSelectionRange(f.start, f.end); } catch { /* ignore */ } }
+}
+function renderAll() {
+  const f = captureFocus();
+  renderSync();
+  renderBanner();
+  renderRestore();
+  renderStorageInfo();
+  renderKpis();
+  renderTrack();
+  renderTabs();
+  renderStart();
+  renderRail();
+  renderStage();
+  renderProjects();
+  renderJournal();
+  restoreFocus(f);
+}
+
+function renderSync() {
+  const el = $("sync");
+  let st = "live", text = "Сохранено в браузере";
+  if (conn.mode === "readonly") { st = "readonly"; text = "Сохранение выключено"; }
+  else if (conn.error) { st = "error"; text = "Не сохранено"; }
+  el.dataset.state = st;
+  el.textContent = text;
+  el.title = conn.error || conn.reason || "";
+  $("restore-btn").disabled = conn.mode === "readonly" && conn.corruptText == null;
+}
+
+function renderBanner() {
+  const el = $("banner");
+  el.hidden = conn.mode !== "readonly";
+  if (!el.hidden) el.replaceChildren(h("strong", null, "Сохранение выключено. "), conn.reason);
+}
+
+function renderStorageInfo() {
+  const last = prefs.get("lastBackup");
+  $("storage-info").textContent = "Отметки, статусы и журнал хранятся в localStorage этого браузера и в git не попадают. "
+    + "В другом браузере их не будет: для переноса и резервной копии скачайте файл. "
+    + (typeof last === "string" && ISO_RE.test(last) ? `Последняя копия — ${showDate(last)}.` : "Копий ещё не было.");
+}
+
+function renderRestore() {
+  const panel = $("restore-panel");
+  const r = ui.restore;
+  panel.hidden = !r;
+  if (!r) return;
+  const marks = Object.values(r.docs.items).filter((x) => x.done === true).length;
+  const statuses = Object.values(r.docs.stages).filter((x) => x.status && x.status !== "not_checked").length;
+  const entries = Object.keys(r.docs.sessions).length;
+  const exported = new Date(r.exportedAt);
+  const when = r.exportedAt && !Number.isNaN(exported.getTime()) ? `от ${fmtFull.format(exported)}` : "без даты";
+  panel.replaceChildren(
+    h("p", null, h("strong", null, `Восстановить из «${r.name}»? `),
+      `Копия ${when}: отметок ${marks}, этапов со статусом ${statuses}, записей журнала ${entries}. `
+      + "Текущие данные этого браузера будут заменены; если они нужны, сначала скачайте их копию."),
+    h("div", { class: "form-actions" },
+      h("button", { type: "button", class: "btn primary", id: "restore-yes", onclick: confirmRestore }, "Заменить данные"),
+      h("button", { type: "button", class: "btn", id: "restore-no",
+        onclick: () => { ui.restore = null; renderAll(); $("restore-btn").focus(); } }, "Отмена")));
+}
+
+function kpi(label, value, small, sub) {
+  return h("div", { class: "kpi" },
+    h("span", { class: "kpi-label" }, label),
+    h("span", { class: "kpi-value" }, value, small ? h("small", null, " " + small) : null),
+    h("span", { class: "kpi-sub" }, sub));
+}
+function renderKpis() {
+  const passed = STAGES.filter((st) => stageStatus(st.id) === "passed").length;
+  const cur = currentStage();
+  const p = pace();
+  const rem = remaining();
+  const target = weeklyTarget();
+  let fv = "—", fs = "", fsub = "";
+  if (rem.max === 0) {
+    fv = "Готово"; fsub = "Оценки всех этапов закрыты";
+  } else {
+    const rate = p ? p.perWeek : target;
+    if (rate > 0) {
+      const wMin = Math.ceil((rem.min * BUFFER) / rate);
+      const wMax = Math.ceil((rem.max * BUFFER) / rate);
+      const today = new Date();
+      fv = wMin === wMax ? String(wMin) : range(wMin, wMax);
+      fs = "нед";
+      fsub = `${p ? `при вашем темпе ${nf1.format(p.perWeek)} ч/нед` : `при ${target} ч/нед`}, с запасом 20% · ${monthYear(addDays(today, wMin * 7))} – ${monthYear(addDays(today, wMax * 7))}`;
+    } else {
+      fsub = "За последние 4 недели в журнале нет часов";
+    }
+  }
+  $("kpis").replaceChildren(
+    kpi("Этапов пройдено", String(passed), `из ${STAGES.length}`,
+      passed === STAGES.length ? "Маршрут пройден" : `Сейчас: этап ${cur.n} · ${cur.title}`),
+    kpi("Часы в журнале", hrs(state.total), "ч",
+      `оценка маршрута ${range(TOTAL_MIN, TOTAL_MAX)} ч · записей: ${state.sessions.length}`),
+    kpi("Темп", p ? nf1.format(p.perWeek) : "—", p ? "ч/нед" : "",
+      p ? `за последние ${p.windowDays} дн · ориентир до ${target} ч` : "Появится после недели записей в журнале"),
+    kpi("Прогноз до финиша", fv, fs, fsub));
+}
+
+function renderTrack() {
+  const segs = [], labels = [], ms = [];
+  let cumMin = 0, cumMax = 0;
+  for (const st of STAGES) {
+    const w = (st.hours[0] + st.hours[1]) / 2;
+    const got = state.hoursBy.get(st.id) || 0;
+    const status = stageStatus(st.id);
+    const over = status !== "passed" && got > st.hours[1];
+    const pct = status === "passed" ? 100 : Math.min(100, (got / st.hours[1]) * 100);
+    const label = `Этап ${st.n}. ${st.title}. ${STATUS_LABEL[status]}. ${hrs(got)} ч из ${range(...st.hours)}`;
+    const flag = MILESTONES.find((m) => m.after === st.id && st.id !== "s10");
+    segs.push(h("button", {
+      type: "button", class: "seg", id: `seg-${st.id}`, style: `--w:${w}`, "data-status": status,
+      "data-over": String(over), "aria-current": String(ui.tab === "route" && ui.stage === st.id),
+      "aria-label": label, title: label, onclick: () => openStage(st.id, true),
+    }, h("span", { class: "seg-fill", style: `width:${pct}%` }),
+    status === "passed" ? h("span", { class: "seg-check", "aria-hidden": "true" }, "✓") : null));
+    labels.push(h("span", { style: `--w:${w}`, "data-flag": flag ? "" : null }, String(st.n)));
+    cumMin += st.hours[0];
+    cumMax += st.hours[1];
+    const m = MILESTONES.find((x) => x.after === st.id);
+    if (m) {
+      const done = stageStatus(st.id) === "passed";
+      ms.push(h("span", { class: done ? "done" : null },
+        h("b", null, `${done ? "✓" : "◆"} ${range(cumMin, cumMax)} ч`), ` — ${m.text}, после этапа ${st.n}`));
+    }
+  }
+  $("track").replaceChildren(...segs);
+  $("track-labels").replaceChildren(...labels);
+  $("milestones").replaceChildren(...ms);
+}
+
+function renderTabs() {
+  for (const t of ["route", "projects", "journal"]) {
+    const on = ui.tab === t;
+    const tab = $(`tab-${t}`);
+    tab.setAttribute("aria-selected", String(on));
+    tab.tabIndex = on ? 0 : -1;
+    $(`panel-${t}`).hidden = !on;
+  }
+  let total = 0, done = 0;
+  for (const p of PROJECTS) for (const [slug] of p.accept) { total++; if (isDone(`${p.id}.${slug}`)) done++; }
+  $("badge-projects").textContent = `${done}/${total}`;
+  $("badge-journal").textContent = String(state.sessions.length);
+}
+
+function renderStart() {
+  const host = $("start");
+  const done = START.filter(([slug]) => isDone(`w.${slug}`)).length;
+  const cards = START.map(([slug, time, text]) => {
+    const id = `w.${slug}`;
+    const ok = isDone(id);
+    return h("label", { class: "start-card", "data-done": String(ok) },
+      h("input", { type: "checkbox", id: `cb-${id}`, checked: ok, disabled: !canEdit(),
+        onchange: (e) => setItem(id, { done: e.target.checked }) }),
+      h("span", { class: "hrs" }, time),
+      h("span", { class: "start-text" }, text));
+  });
+  if (done === START.length) {
+    host.replaceChildren(h("details", {
+      class: "start start-done", open: ui.startOpen === true,
+      ontoggle: (e) => { ui.startOpen = e.target.open; },
+    }, h("summary", null, "Стартовая раскладка на 20 часов выполнена"), h("div", { class: "start-grid" }, cards)));
+    return;
+  }
+  host.replaceChildren(h("section", { class: "start", "aria-labelledby": "start-title" },
+    h("div", { class: "start-head" },
+      h("h2", { id: "start-title" }, "Стартовая раскладка на 20 часов ", h("span", { class: "eyebrow num" }, `${done} из ${START.length}`)),
+      h("p", null, "Первые две недели, а не обещание закончить SQL за две недели. Если диагностика подтверждает уверенный навык, переходите к следующей задаче.")),
+    h("div", { class: "start-grid" }, cards)));
+}
+
+function renderRail() {
+  $("rail").replaceChildren(...STAGES.map((st) => {
+    const status = stageStatus(st.id);
+    const c = stageCounts(st);
+    const got = state.hoursBy.get(st.id) || 0;
+    const over = status !== "passed" && got > st.hours[1];
+    return h("button", {
+      type: "button", class: "rail-item", id: `rail-${st.id}`, "data-status": status,
+      "aria-current": ui.stage === st.id ? "true" : null, title: `Этап ${st.n}. ${st.title}`,
+      onclick: () => openStage(st.id),
+    },
+    h("span", { class: "rail-num", "aria-hidden": "true" }, String(st.n)),
+    h("span", { class: "rail-title" }, h("span", { class: "visually-hidden" }, `Этап ${st.n}. `), st.title),
+    h("span", { class: "rail-meta" },
+      h("span", { class: "rail-status-text" }, STATUS_LABEL[status]),
+      h("span", { class: "num" }, `${c.done}/${c.total}`),
+      h("span", { class: over ? "num over" : "num" }, `${hrs(got)} из ${range(...st.hours)} ч`)));
+  }));
+}
+
+function checkItem(id, text, idx, opts = {}) {
+  const rec = state.items[id] || {};
+  const done = rec.done === true;
+  const note = String(rec.note || "");
+  const open = ui.noteOpen === id;
+  const cbId = `cb-${id}`;
+  const children = [
+    h("input", { type: "checkbox", id: cbId, checked: done, disabled: !canEdit() || !!opts.lock,
+      title: opts.lock ? "Этап пройден: чтобы изменить критерии, верните статус «В работе»" : null,
+      onchange: (e) => setItem(id, { done: e.target.checked }) }),
+    idx ? h("span", { class: "idx num", "aria-hidden": "true" }, String(idx)) : null,
+    h("label", { for: cbId }, rich(text)),
+    canEdit() ? h("button", { type: "button", class: "note-btn", id: `nb-${id}`, "data-has": String(!!note),
+      "aria-expanded": String(open), onclick: () => toggleNote(id) }, note ? "заметка" : "+ заметка") : h("span"),
+  ];
+  if (open) {
+    const key = `note-${id}`;
+    children.push(h("div", { class: "note-editor" },
+      h("label", { class: "visually-hidden", for: key }, "Заметка или доказательство"),
+      h("textarea", { id: key, rows: 2, maxlength: 2000, value: ui.drafts[key] ?? note,
+        placeholder: "Ссылка на коммит или тест, вывод эксперимента, короткий разбор",
+        oninput: (e) => { ui.drafts[key] = e.target.value; },
+        onkeydown: (e) => {
+          if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); saveNote(id); }
+          if (e.key === "Escape") { e.preventDefault(); closeNote(id); }
+        } }),
+      h("div", { class: "row" },
+        h("button", { type: "button", class: "btn small primary", onclick: () => saveNote(id) }, "Сохранить"),
+        h("button", { type: "button", class: "btn small", onclick: () => closeNote(id) }, "Отмена"),
+        note ? h("button", { type: "button", class: "btn small danger", onclick: () => { ui.drafts[key] = ""; saveNote(id); } }, "Удалить заметку") : null)));
+  } else {
+    if (note) children.push(h("p", { class: "item-note" }, linkify(note)));
+    if (done && rec.doneAt) children.push(h("p", { class: "item-meta" }, `отмечено ${showDate(rec.doneAt)}`));
+  }
+  return h("li", { class: idx ? "check-item numbered" : "check-item", "data-done": String(done) }, children);
+}
+
+function textField(key, label, value, placeholder, onCommit) {
+  return h("div", { class: "field" },
+    h("label", { for: key }, label),
+    h("textarea", { id: key, rows: 3, maxlength: 4000, placeholder, value: ui.drafts[key] ?? value ?? "",
+      disabled: !canEdit(),
+      oninput: (e) => { ui.drafts[key] = e.target.value; },
+      onchange: onCommit }));
+}
+
+function renderStage() {
+  const st = STAGE_BY_ID.get(ui.stage) || currentStage();
+  const status = stageStatus(st.id);
+  const rec = state.stages[st.id] || {};
+  const got = state.hoursBy.get(st.id) || 0;
+  const c = stageCounts(st);
+  const over = status !== "passed" && got > st.hours[1];
+  const pct = c.total ? Math.round((c.done / c.total) * 100) : 0;
+  const editable = canEdit();
+
+  const groups = st.groups.map((g) => {
+    const doneN = g.items.filter(([slug]) => isDone(`${st.id}.${slug}`)).length;
+    const hid = `g-${st.id}-${g.key}`;
+    return h("section", { class: "group", "data-kind": g.key, "aria-labelledby": hid },
+      h("div", { class: "group-head" },
+        h("h3", { id: hid }, g.title),
+        h("span", { class: "count num" }, `${doneN}/${g.items.length}`),
+        g.hint ? h("span", { class: "hint" }, rich(g.hint)) : null,
+        g.key === "exit" ? h("span", { class: "hint" }, "все нужны для статуса «Пройден»") : null),
+      h("ul", { class: "checklist" }, g.items.map(([slug, text], i) =>
+        checkItem(`${st.id}.${slug}`, text, g.numbered ? i + 1 : null, { lock: g.key === "exit" && status === "passed" }))),
+      g.note ? h("p", { class: "group-note" }, g.note) : null);
+  });
+
+  const statusRow = h("div", { class: "status-row" },
+    h("span", { id: "status-label" }, "Статус этапа"),
+    h("div", { class: "seg-control", role: "radiogroup", "aria-labelledby": "status-label" },
+      ["not_checked", "in_progress", "passed"].map((v) => h("button", {
+        type: "button", role: "radio", id: `st-${st.id}-${v}`, "data-value": v,
+        "aria-checked": String(status === v), disabled: !editable,
+        "aria-disabled": v === "passed" && status !== "passed" && (c.exitDone < c.exitTotal || !(ui.drafts[`ev-${st.id}`] ?? rec.evidence ?? "").trim()) ? "true" : null,
+        onclick: () => onStatus(st, v),
+      }, STATUS_LABEL[v]))),
+    ui.gate?.stage === st.id ? h("p", { class: "gate-msg", role: "alert" }, ui.gate.text) : null);
+
+  const article = h("article", { class: "sheet stage", "data-status": status, "aria-labelledby": "stage-title" },
+    h("header", { class: "stage-head" },
+      h("div", { class: "stage-big", "aria-hidden": "true" }, String(st.n)),
+      h("div", null,
+        h("p", { class: "eyebrow" }, `Этап ${st.n} · оценка ${range(...st.hours)} ч${st.project ? ` · проект ${st.project}` : ""}`),
+        h("h2", { id: "stage-title" }, st.title),
+        h("p", { class: "lead" }, h("b", null, `${st.lead[0]}: `), st.lead[1]))),
+    status === "passed"
+      ? h("div", { class: "stamp", role: "img", "aria-label": `Проверено ${showDate(rec.passedAt)}` },
+        "Проверено", h("span", null, rec.passedAt && ISO_RE.test(rec.passedAt) ? fmtDM(parseISO(rec.passedAt)) + "." + rec.passedAt.slice(0, 4) : ""))
+      : null,
+    h("div", { class: "stage-stats" },
+      h("div", null, "Пункты ", h("b", { class: "num" }, `${c.done} из ${c.total}`),
+        h("div", { class: "meter", role: "img", "aria-label": `${pct}%` }, h("i", { style: `width:${pct}%` }))),
+      h("div", { class: over ? "over" : null }, "Факт ", h("b", { class: "num" }, `${hrs(got)} ч`),
+        ` из ${range(...st.hours)}${over ? " · сверх оценки" : ""}`),
+      h("div", null, "Критерии выхода ", h("b", { class: "num" }, `${c.exitDone} из ${c.exitTotal}`))),
+    statusRow,
+    groups,
+    st.notes?.length ? h("ul", { class: "notes-list" }, st.notes.map((n) => h("li", null, rich(n)))) : null,
+    st.reading?.length ? h("div", { class: "reading" }, h("span", null, "Читать:"),
+      st.reading.map(([t, u]) => h("a", { href: u, target: "_blank", rel: "noopener noreferrer" }, `${t} ↗`))) : null,
+    h("section", { class: "verify", "aria-labelledby": "verify-title" },
+      h("h3", { id: "verify-title" }, "Проверка этапа"),
+      h("p", { class: "rule-text" }, "Перед переходом дальше: без подсказки объяснить основные решения, выполнить критерии этапа и показать работающий сценарий. Доказательство — ссылка на код или тест, вывод эксперимента или краткий разбор."),
+      h("div", { class: "field-pair" },
+        textField(`ev-${st.id}`, "Доказательство", rec.evidence, "Коммиты, тесты, вывод эксперимента, краткий разбор",
+          () => commitStageText(st.id, "evidence", `ev-${st.id}`)),
+        textField(`gap-${st.id}`, "Пробелы и вопросы", rec.gaps, "Что пока не получается без подсказки",
+          () => commitStageText(st.id, "gaps", `gap-${st.id}`))),
+      status === "passed"
+        ? h("p", { class: "group-note" }, `Пройден ${showDate(rec.passedAt)}. Чтобы изменить критерии выхода, верните статус «В работе».`)
+        : null));
+  $("stage").replaceChildren(article);
+}
+
+function renderProjects() {
+  $("projects").replaceChildren(...PROJECTS.map((p) => {
+    const doneN = p.accept.filter(([slug]) => isDone(`${p.id}.${slug}`)).length;
+    return h("article", { class: "sheet project", "aria-labelledby": `pt-${p.id}` },
+      h("div", null, h("h2", { id: `pt-${p.id}` }, p.name), h("p", { class: "where" }, p.where)),
+      h("dl", null, h("dt", null, "Личная польза"), h("dd", null, p.use), h("dt", null, "Главный новый опыт"), h("dd", null, p.gain)),
+      h("section", { class: "group" },
+        h("div", { class: "group-head" }, h("h3", null, "Готовность"), h("span", { class: "hint" }, "по статусам этапов")),
+        h("ul", { class: "readiness" }, p.readiness.map(([sid, text]) => h("li", { "data-done": String(stageStatus(sid) === "passed") }, text)))),
+      h("section", { class: "group", "aria-labelledby": `pa-${p.id}` },
+        h("div", { class: "group-head" }, h("h3", { id: `pa-${p.id}` }, "Приёмка"), h("span", { class: "count num" }, `${doneN}/${p.accept.length}`)),
+        h("ul", { class: "checklist" }, p.accept.map(([slug, text]) => checkItem(`${p.id}.${slug}`, text, null)))),
+      h("p", { class: "not-mvp" }, h("b", null, "Не добавлять в MVP: "), p.notMvp));
+  }));
+}
+
+function weeksData(n = 12) {
+  const cur = weekStart(new Date());
+  const weeks = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const start = addDays(cur, -7 * i);
+    const end = addDays(start, 6);
+    weeks.push({ start, end, from: isoDate(start), to: isoDate(end), hours: 0, count: 0, current: i === 0 });
+  }
+  for (const e of state.sessions) {
+    const w = weeks.find((x) => e.date >= x.from && e.date <= x.to);
+    if (w) { w.hours += e.hours; w.count++; }
+  }
+  return weeks;
+}
+
+function renderChart() {
+  const host = $("chart");
+  const width = Math.floor(host.clientWidth);
+  const weeks = weeksData();
+  $("chart-table").replaceChildren(h("table", null,
+    h("thead", null, h("tr", null, h("th", null, "Неделя"), h("th", { class: "r" }, "Часы"), h("th", { class: "r" }, "Записей"))),
+    h("tbody", null, weeks.slice().reverse().map((w) => h("tr", null,
+      h("td", null, weekLabel(w)), h("td", { class: "r" }, hrs(w.hours)), h("td", { class: "r" }, String(w.count)))))));
+  if (!width) return; // вкладка скрыта: ResizeObserver дорисует при показе
+  const target = weeklyTarget();
+  const maxV = Math.max(target, ...weeks.map((w) => w.hours));
+  const step = maxV <= 8 ? 2 : maxV <= 20 ? 5 : maxV <= 40 ? 10 : 20;
+  const yMax = Math.ceil(maxV / step) * step;
+  const H = 210, m = { top: 22, right: 4, bottom: 26, left: 28 };
+  const pw = width - m.left - m.right, ph = H - m.top - m.bottom;
+  const band = pw / weeks.length;
+  const bw = Math.min(24, band * 0.62);
+  const y = (v) => m.top + ph - (v / yMax) * ph;
+  const svg = s("svg", { width, height: H, viewBox: `0 0 ${width} ${H}`, role: "group", "aria-label": `Часы по неделям за последние ${weeks.length} недель` });
+  for (let v = 0; v <= yMax; v += step) {
+    svg.append(s("line", { class: v === 0 ? "baseline" : "gridline", x1: m.left, x2: width - m.right, y1: y(v), y2: y(v) }));
+    svg.append(s("text", { x: m.left - 6, y: y(v) + 4, "text-anchor": "end" }, String(v)));
+  }
+  svg.append(s("line", { class: "target", x1: m.left, x2: width - m.right, y1: y(target), y2: y(target) }));
+  svg.append(s("text", { class: "target-label", x: width - m.right, y: y(target) - 5, "text-anchor": "end" }, `ориентир ${target} ч`));
+  const tip = h("div", { class: "tooltip", hidden: true });
+  weeks.forEach((w, i) => {
+    const cx = m.left + band * i + band / 2;
+    const g = s("g", { class: "col" });
+    const show = () => {
+      tip.replaceChildren(h("b", null, `${hrs(w.hours)} ч`), `${weekLabel(w)} · записей: ${w.count}`);
+      tip.style.left = `${Math.min(Math.max(cx, 80), width - 80)}px`;
+      tip.style.top = `${y(w.hours) - 10}px`;
+      tip.hidden = false;
+    };
+    const hide = () => { tip.hidden = true; };
+    g.append(s("rect", {
+      class: "bar-hit", x: m.left + band * i, y: m.top, width: band, height: ph, tabindex: 0,
+      "aria-label": `${weekLabel(w)}: ${hrs(w.hours)} ч, записей ${w.count}`,
+      onpointerenter: show, onpointerleave: hide, onfocus: show, onblur: hide,
+    }));
+    if (w.hours > 0) {
+      const x0 = cx - bw / 2, top = y(w.hours), base = y(0);
+      const r = Math.min(4, bw / 2, base - top);
+      g.append(s("path", { class: w.current ? "bar current" : "bar",
+        d: `M${x0},${base}V${top + r}Q${x0},${top} ${x0 + r},${top}H${x0 + bw - r}Q${x0 + bw},${top} ${x0 + bw},${top + r}V${base}Z` }));
+    }
+    if (band >= 40 || (weeks.length - 1 - i) % 2 === 0) {
+      g.append(s("text", { x: cx, y: H - 8, "text-anchor": "middle" }, w.current ? "эта нед." : fmtDM(w.start)));
+    }
+    svg.append(g);
+  });
+  const last = weeks[weeks.length - 1];
+  if (last.hours > 0) {
+    svg.append(s("text", { class: "value", x: m.left + band * (weeks.length - 0.5), y: y(last.hours) - 6, "text-anchor": "middle" }, hrs(last.hours)));
+  }
+  host.replaceChildren(svg, tip);
+}
+
+function renderReview() {
+  const host = $("review");
+  if (state.total < 20 || state.settings.estimateReviewedAt) { host.replaceChildren(); return; }
+  const rows = STAGES.filter((st) => state.hoursBy.has(st.id)).map((st) => {
+    const got = state.hoursBy.get(st.id);
+    return h("tr", null, h("td", null, st.short), h("td", { class: "r" }, range(...st.hours)),
+      h("td", { class: "r" }, hrs(got)), h("td", null, STATUS_LABEL[stageStatus(st.id)]));
+  });
+  host.replaceChildren(h("section", { class: "review", "aria-labelledby": "review-title" },
+    h("h3", { id: "review-title" }, `В журнале ${hrs(state.total)} ч — пора сравнить факт с оценкой`),
+    h("p", null, "План просит пересчитать оценки после первых 20–30 часов. Если факт заметно расходится с оценкой, поправьте темп или объём этапов в ROADMAP.md."),
+    rows.length ? h("div", { class: "table-scroll" }, h("table", null,
+      h("thead", null, h("tr", null, h("th", null, "Этап"), h("th", { class: "r" }, "Оценка, ч"), h("th", { class: "r" }, "Факт, ч"), h("th", null, "Статус"))),
+      h("tbody", null, rows))) : null,
+    h("div", null, h("button", { type: "button", class: "btn small", id: "review-done", disabled: !canEdit(),
+      onclick: () => setSettings({ estimateReviewedAt: todayISO() }) }, "Оценки пересмотрены"))));
+}
+
+function entryCard(e) {
+  const st = STAGE_BY_ID.get(e.stage);
+  const filled = SESSION_FIELDS.filter(([k]) => e[k].trim());
+  const confirming = ui.confirmDelete === e.id;
+  let actions = null;
+  if (canEdit()) {
+    actions = h("div", { class: "entry-actions" }, confirming
+      ? [h("span", null, "Удалить запись?"),
+        h("button", { type: "button", class: "btn small danger", id: `del-yes-${e.id}`,
+          onclick: () => { ui.confirmDelete = null; write(`sessions/${e.id}`, null); toast("Запись удалена"); } }, "Удалить"),
+        h("button", { type: "button", class: "btn small", id: `del-no-${e.id}`,
+          onclick: () => { ui.confirmDelete = null; renderAll(); $(`del-${e.id}`)?.focus(); } }, "Отмена")]
+      : [h("button", { type: "button", class: "btn small", id: `edit-${e.id}`, onclick: () => startEdit(e) }, "Изменить"),
+        h("button", { type: "button", class: "btn small", id: `del-${e.id}`,
+          onclick: () => { ui.confirmDelete = e.id; renderAll(); $(`del-no-${e.id}`)?.focus(); } }, "Удалить")]);
+  }
+  return h("article", { class: "sheet entry", id: `entry-${e.id}` },
+    h("div", { class: "entry-head" },
+      h("time", { datetime: e.date }, fmtDayW.format(parseISO(e.date))),
+      st ? h("span", { class: "chip" }, `Этап ${st.n}`) : h("span", { class: "chip muted" }, "Без этапа"),
+      h("span", { class: "entry-hours" }, `${hrs(e.hours)} ч`)),
+    e.topic ? h("p", { class: "entry-topic" }, e.topic) : null,
+    filled.length ? h("details", {
+      open: ui.openEntries.has(e.id),
+      ontoggle: (ev) => { if (ev.target.open) ui.openEntries.add(e.id); else ui.openEntries.delete(e.id); },
+    }, h("summary", null, `Запись по шаблону · ${filled.length} из ${SESSION_FIELDS.length}`),
+    h("dl", null, filled.map(([k, label]) => [h("dt", null, label), h("dd", null, linkify(e[k]))]))) : null,
+    actions);
+}
+
+function renderEntries() {
+  const host = $("entries");
+  if (!state.sessions.length) {
+    host.replaceChildren(h("div", { class: "empty" },
+      h("b", null, "Записей пока нет."),
+      h("span", null, "После занятия запишите дату, часы и тему. Часы попадут в отрезок этапа на линейке, в недельный темп и в прогноз."),
+      h("span", null, "Первое занятие по стартовой раскладке — 2 часа диагностики SQL/HTTP без AI.")));
+    return;
+  }
+  const weeks = new Map();
+  for (const e of state.sessions) {
+    const key = isoDate(weekStart(parseISO(e.date)));
+    if (!weeks.has(key)) weeks.set(key, []);
+    weeks.get(key).push(e);
+  }
+  host.replaceChildren(...[...weeks].map(([key, list]) => {
+    const start = parseISO(key);
+    const total = list.reduce((a, e) => a + e.hours, 0);
+    const label = `${fmtDay.format(start)} – ${fmtDay.format(addDays(start, 6))}`;
+    return h("section", { class: "week", "aria-label": `Неделя ${label}` },
+      h("div", { class: "week-head" }, h("span", null, label), h("span", null, h("b", null, `${hrs(total)} ч`), ` · записей: ${list.length}`)),
+      list.map(entryCard));
+  }));
+}
+
+function renderJournal() {
+  const t = $("weekly-target");
+  if (document.activeElement !== t) t.value = String(weeklyTarget());
+  t.disabled = !canEdit();
+  for (const el of $("entry-form").elements) el.disabled = !canEdit();
+  renderChart();
+  renderReview();
+  renderEntries();
+}
+
+// ---------- действия ----------
+function openStage(id, fromTrack) {
+  ui.stage = id;
+  ui.gate = null;
+  ui.noteOpen = null;
+  ui.tab = "route";
+  prefs.set("stage", id);
+  prefs.set("tab", "route");
+  renderAll();
+  if (fromTrack) $("panel-route").scrollIntoView({ behavior: smooth(), block: "start" });
+}
+
+function toggleNote(id) {
+  if (ui.noteOpen === id) { closeNote(id); return; }
+  ui.noteOpen = id;
+  renderAll();
+  const ta = $(`note-${id}`);
+  if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+}
+function closeNote(id) {
+  delete ui.drafts[`note-${id}`];
+  ui.noteOpen = null;
+  renderAll();
+  $(`nb-${id}`)?.focus();
+}
+function saveNote(id) {
+  const key = `note-${id}`;
+  const cur = String(state.items[id]?.note || "");
+  const v = String(ui.drafts[key] ?? cur).trim().slice(0, 2000);
+  delete ui.drafts[key];
+  ui.noteOpen = null;
+  if (v !== cur) setItem(id, { note: v });
+  else renderAll();
+  $(`nb-${id}`)?.focus();
+}
+
+// Текст проверки сохраняется при уходе из поля, без перерисовки: клик, ради которого
+// фокус ушёл, должен попасть в ту же кнопку.
+function commitStageText(sid, field, key) {
+  if (!(key in ui.drafts) || !canEdit()) return;
+  const v = ui.drafts[key].trim().slice(0, 4000);
+  const cur = String(state.stages[sid]?.[field] || "");
+  if (field === "evidence" && !v && stageStatus(sid) === "passed") {
+    delete ui.drafts[key];
+    ui.gate = { stage: sid, text: "У пройденного этапа должно оставаться доказательство. Чтобы убрать его, сначала верните статус «В работе»." };
+    renderAll();
+    return;
+  }
+  delete ui.drafts[key];
+  if (v !== cur.trim()) setStage(sid, { [field]: v }, { render: false });
+}
+function flushStageDrafts() {
+  for (const key of Object.keys(ui.drafts)) {
+    const m = /^(ev|gap)-(s\d+)$/.exec(key);
+    if (m) commitStageText(m[2], m[1] === "ev" ? "evidence" : "gaps", key);
+  }
+}
+
+function onStatus(st, value) {
+  if (!canEdit() || stageStatus(st.id) === value) return;
+  const rec = state.stages[st.id] || {};
+  const evKey = `ev-${st.id}`, gapKey = `gap-${st.id}`;
+  const evidence = String(ui.drafts[evKey] ?? rec.evidence ?? "").trim();
+  const c = stageCounts(st);
+  if (value === "passed" && (c.exitDone < c.exitTotal || !evidence)) {
+    const need = [];
+    if (c.exitDone < c.exitTotal) need.push(`отметьте все критерии выхода (сейчас ${c.exitDone} из ${c.exitTotal})`);
+    if (!evidence) need.push("запишите доказательство в блоке «Проверка этапа»");
+    ui.gate = { stage: st.id, text: `Чтобы отметить этап пройденным, ${need.join(" и ")}.` };
+    renderAll();
+    return;
+  }
+  ui.gate = null;
+  const patch = { status: value };
+  if (evKey in ui.drafts) { patch.evidence = evidence; delete ui.drafts[evKey]; }
+  if (gapKey in ui.drafts) { patch.gaps = ui.drafts[gapKey].trim(); delete ui.drafts[gapKey]; }
+  setStage(st.id, patch);
+  if (value === "passed") toast(`Этап ${st.n} отмечен пройденным`);
+}
+
+// ---------- журнал ----------
+const FORM_IDS = ["f-date", "f-hours", "f-stage", "f-topic", ...SESSION_FIELDS.map(([k]) => `f-${k}`)];
+const readForm = () => Object.fromEntries(FORM_IDS.map((id) => [id, $(id).value]));
+function fillForm(values) {
+  for (const id of FORM_IDS) if (values[id] != null) $(id).value = values[id];
+}
+function formMode() {
+  const editing = !!ui.editing;
+  $("form-title").textContent = editing ? "Правка записи" : "Новая запись";
+  $("f-submit").textContent = editing ? "Сохранить изменения" : "Сохранить запись";
+  $("f-cancel").hidden = !editing;
+}
+function resetForm(keep = {}) {
+  for (const id of FORM_IDS) $(id).value = "";
+  $("f-date").value = keep.date || todayISO();
+  $("f-stage").value = keep.stage ?? (ui.stage || currentStage().id);
+  ui.editing = null;
+  $("form-error").hidden = true;
+  formMode();
+  prefs.set("draft", null);
+}
+// Чистая форма предлагает тот этап, который открыт в списке.
+function syncFormStage() {
+  if (!ui.editing && !$("f-topic").value.trim() && ui.stage) $("f-stage").value = ui.stage;
+}
+function startEdit(e) {
+  ui.editing = e.id;
+  ui.tab = "journal";
+  fillForm({
+    "f-date": e.date, "f-hours": hrs(e.hours), "f-stage": e.stage, "f-topic": e.topic,
+    ...Object.fromEntries(SESSION_FIELDS.map(([k]) => [`f-${k}`, e[k]])),
+  });
+  if (SESSION_FIELDS.some(([k]) => e[k])) $("f-template").open = true;
+  $("form-error").hidden = true;
+  formMode();
+  renderAll();
+  $("entry-form").scrollIntoView({ behavior: smooth(), block: "start" });
+  $("f-topic").focus({ preventScroll: true });
+}
+function submitForm(ev) {
+  ev.preventDefault();
+  if (!canEdit()) return;
+  const v = readForm();
+  const fail = (msg, id) => {
+    const p = $("form-error");
+    p.textContent = msg;
+    p.hidden = false;
+    $(id).focus();
+  };
+  const hours = Number(String(v["f-hours"]).trim().replace(",", "."));
+  if (!ISO_RE.test(v["f-date"])) { fail("Укажите дату занятия.", "f-date"); return; }
+  if (!(hours > 0 && hours <= 16)) { fail("Укажите часы числом от 0,25 до 16, например 1,5.", "f-hours"); return; }
+  if (!v["f-topic"].trim()) { fail("Коротко назовите тему занятия.", "f-topic"); return; }
+  const prev = ui.editing ? state.sessions.find((x) => x.id === ui.editing) : null;
+  const id = prev ? prev.id : newId();
+  const now = new Date().toISOString();
+  const entry = {
+    date: v["f-date"], hours: Math.round(hours * 100) / 100,
+    stage: STAGE_BY_ID.has(v["f-stage"]) ? v["f-stage"] : "",
+    topic: v["f-topic"].trim().slice(0, 200), createdAt: prev?.createdAt || now, updatedAt: now,
+  };
+  for (const [k] of SESSION_FIELDS) entry[k] = v[`f-${k}`].trim().slice(0, 4000);
+  resetForm({ date: entry.date, stage: entry.stage });
+  write(`sessions/${id}`, entry);
+  toast(prev ? "Запись обновлена" : "Запись сохранена");
+}
+
+// ---------- резервная копия ----------
+function downloadBackup() {
+  const unreadable = conn.corruptText != null;
+  const text = unreadable
+    ? conn.corruptText
+    : JSON.stringify({ app: BACKUP_APP, version: 1, exportedAt: new Date().toISOString(), ...snapshotDocs() }, null, 2) + "\n";
+  const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+  const a = h("a", { href: url, download: `backend-lab-progress-${unreadable ? "unreadable-" : ""}${todayISO()}.json` });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  if (!unreadable) prefs.set("lastBackup", todayISO());
+  renderStorageInfo();
+  toast(unreadable ? "Скачаны нечитаемые данные как есть" : "Копия скачана. Храните файл вне браузера, например рядом с PROGRESS.md");
+}
+async function onRestoreFile(e) {
+  const file = e.target.files?.[0];
+  e.target.value = "";
+  if (!file) return;
+  try {
+    if (file.size > 5 * 1024 * 1024) throw new Error("файл больше 5 МБ");
+    const src = JSON.parse(await file.text());
+    ui.restore = { docs: parseDocs(src), name: file.name, exportedAt: typeof src.exportedAt === "string" ? src.exportedAt : "" };
+  } catch (err) {
+    ui.restore = null;
+    toast(`Файл не подходит: ${err.message}`);
+    return;
+  }
+  renderAll();
+  $("restore-yes")?.focus();
+}
+function confirmRestore() {
+  const r = ui.restore;
+  if (!r) return;
+  const before = snapshotDocs();
+  applyDocs(r.docs);
+  try {
+    persist();
+  } catch (e) {
+    applyDocs(before);
+    toast(e?.name === "QuotaExceededError" ? "Копия не помещается в хранилище браузера" : "Браузер отказал в записи, данные не восстановлены");
+    return;
+  }
+  ui.restore = null;
+  ui.drafts = {};
+  conn.mode = "live";
+  conn.reason = "";
+  conn.corruptText = null;
+  conn.error = "";
+  onData(true);
+  toast("Данные восстановлены из копии");
+}
+
+// ---------- таблица для PROGRESS.md ----------
+function progressTable() {
+  const head = ["Этап", "Статус", "Факт, часы", "Доказательство / пробел"];
+  const clean = (t) => String(t || "").replace(/\s*\n\s*/g, " ").replace(/\|/g, "\\|").trim();
+  const rows = STAGES.map((st) => {
+    const rec = state.stages[st.id] || {};
+    const got = state.hoursBy.get(st.id) || 0;
+    const cell = [clean(rec.evidence), rec.gaps ? `пробел: ${clean(rec.gaps)}` : ""].filter(Boolean).join("; ");
+    return [st.short, STATUS_LABEL[stageStatus(st.id)], got ? hrs(got) : "—", cell];
+  });
+  const widths = head.map((_, i) => Math.max(head[i].length, ...rows.map((r) => r[i].length)));
+  const line = (cells) => `| ${cells.map((c, i) => c.padEnd(widths[i])).join(" | ")} |`;
+  return [line(head), `| ${widths.map((w) => "-".repeat(w)).join(" | ")} |`, ...rows.map(line)].join("\n");
+}
+function exportTable() {
+  const text = progressTable();
+  const fallback = () => {
+    const panel = $("copy-panel");
+    const ta = h("textarea", { id: "copy-text", readonly: true, value: text, "aria-label": "Таблица для PROGRESS.md" });
+    panel.replaceChildren(
+      h("p", { class: "kpi-sub" }, "Буфер обмена недоступен в этом окне. Выделите текст и скопируйте вручную."),
+      ta,
+      h("div", null, h("button", { type: "button", class: "btn small", onclick: () => { panel.hidden = true; $("export-btn").focus(); } }, "Скрыть")));
+    panel.hidden = false;
+    ta.focus();
+    ta.select();
+  };
+  try {
+    navigator.clipboard.writeText(text)
+      .then(() => toast("Таблица скопирована: замените ею «Контрольные точки» в PROGRESS.md"))
+      .catch(fallback);
+  } catch { fallback(); }
+}
+
+let toastTimer = 0;
+function toast(msg) {
+  const el = $("toast");
+  el.textContent = msg;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 3600);
+}
+
+function setTab(t, focus) {
+  ui.tab = t;
+  if (t === "journal") syncFormStage();
+  prefs.set("tab", t);
+  renderAll();
+  if (focus) $(`tab-${t}`).focus();
+}
+
+// ---------- запуск ----------
+function boot() {
+  const TABS = ["route", "projects", "journal"];
+  const hash = location.hash.slice(1);
+  const savedStage = prefs.get("stage");
+  ui.stage = STAGE_BY_ID.has(hash) ? hash : STAGE_BY_ID.has(savedStage) ? savedStage : null;
+  ui.tab = TABS.includes(hash) ? hash : STAGE_BY_ID.has(hash) ? "route" : TABS.includes(prefs.get("tab")) ? prefs.get("tab") : "route";
+
+  $("f-stage").replaceChildren(h("option", { value: "" }, "Без этапа"),
+    ...STAGES.map((st) => h("option", { value: st.id }, `${st.n} · ${st.title}`)));
+  const draft = prefs.get("draft");
+  resetForm();
+  if (draft && typeof draft === "object") {
+    fillForm(Object.fromEntries(Object.entries(draft).filter(([k, val]) => FORM_IDS.includes(k) && typeof val === "string" && val)));
+    prefs.set("draft", draft);
+  }
+  if (prefs.get("templateOpen") === false) $("f-template").open = false;
+
+  let draftTimer = 0;
+  $("entry-form").addEventListener("input", () => {
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(() => { if (!ui.editing) prefs.set("draft", readForm()); }, 400);
+  });
+  $("entry-form").addEventListener("submit", submitForm);
+  $("f-cancel").addEventListener("click", () => { resetForm(); renderAll(); });
+  $("f-clear").addEventListener("click", () => { resetForm(); $("f-topic").focus(); });
+  $("f-template").addEventListener("toggle", (e) => prefs.set("templateOpen", e.target.open));
+  $("weekly-target").addEventListener("change", (e) => {
+    const t = Math.round(Number(e.target.value));
+    if (t >= 1 && t <= 40 && t !== weeklyTarget()) setSettings({ weeklyTarget: t });
+    else e.target.value = String(weeklyTarget());
+  });
+  $("export-btn").addEventListener("click", exportTable);
+
+  for (const t of TABS) $(`tab-${t}`).addEventListener("click", () => setTab(t));
+  document.querySelector(".tabs").addEventListener("keydown", (e) => {
+    const i = TABS.indexOf(ui.tab);
+    if (e.key === "ArrowRight") { e.preventDefault(); setTab(TABS[(i + 1) % TABS.length], true); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); setTab(TABS[(i + TABS.length - 1) % TABS.length], true); }
+  });
+
+  let chartFrame = 0;
+  new ResizeObserver(() => {
+    cancelAnimationFrame(chartFrame);
+    chartFrame = requestAnimationFrame(renderChart);
+  }).observe($("chart"));
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushStageDrafts();
+  });
+
+  $("backup-btn").addEventListener("click", downloadBackup);
+  $("restore-btn").addEventListener("click", () => $("restore-file").click());
+  $("restore-file").addEventListener("change", onRestoreFile);
+  // Другая вкладка с этой страницей изменила данные: перечитать их.
+  window.addEventListener("storage", (e) => {
+    if (e.key !== null && e.key !== STORAGE_KEY) return;
+    loadStorage();
+    onData(true);
+  });
+
+  loadStorage();
+  lastSig = derive();
+  if (!ui.stage) ui.stage = currentStage().id;
+  syncFormStage();
+  renderAll();
+}
+boot();
+})();
+</script>
+</body>
+</html>
